@@ -4,7 +4,7 @@ Meeting Time: lect02 - 1.12.26
 
 Type of meeting: Daily scrum standup
 
-Team: Matt, Divyani, Jiaming, Divya, Saeed, Avaneesh, Yuhang, Arya
+Team: Matt [x], Divyani [x], Jiaming [x], Divya [x], Saeed [x], Avaneesh [x], Yuhang [x], Arya [x]
 
 
 Scrum 1 (1/12/25): 
