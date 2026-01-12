@@ -30,8 +30,7 @@ Divya
 * No current blockers
 
 Saeed
-* Finished gradescope assignment, finished up name.md
-* Working on finishing lab01
+* Finished gradescope assignment, finishing up name.md
 * No current blockers
 
 Yuhang
@@ -40,6 +39,5 @@ Yuhang
 * No current blockers
 
 Arya
-* Finished gradescope assignment, finished up name.md
-* Working on finishing lab01
+* Finished gradescope assignment, finishing up name.md
 * No current blockers
