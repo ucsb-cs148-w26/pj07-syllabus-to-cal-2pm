@@ -1,0 +1,1 @@
+A student doesn't know how to use google calendar, and it's the start of a new quarter. This student is taking 5 classes and wants to make sure they have all of the important dates in their calendar, but there's just too many assignments, exams, etc. If only there was an app that could automatically take in their syllabi and automatically put it in their calendar :(.
