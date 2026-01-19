@@ -1,0 +1,67 @@
+####################################
+# macOS
+####################################
+.DS_Store
+
+
+####################################
+# Xcode
+####################################
+# User-specific settings
+xcuserdata/
+*.xcuserstate
+
+# Build products
+DerivedData/
+build/
+
+# Workspace settings
+*.xcworkspace/xcuserdata/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+
+####################################
+# Xcode playgrounds
+####################################
+timeline.xctimeline
+playground.xcworkspace
+
+
+####################################
+# Code coverage / profiling
+####################################
+*.gcno
+*.gcda
+*.profraw
+
+
+####################################
+# Carthage
+####################################
+Carthage/Build/
+
+
+####################################
+# CocoaPods
+####################################
+Pods/
+
+
+####################################
+# Fastlane
+####################################
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+
+####################################
+# Temporary files
+####################################
+*.swp
+*.tmp
+*.log
