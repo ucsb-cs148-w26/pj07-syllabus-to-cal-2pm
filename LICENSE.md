@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) [2026] [Matthew Blanke, Arya Sadeghi, Yuhang Jiang, Divyani Punj, Saeed Arellano, Matt Blanke, Jiaming Liu, Divya Subramonian, Avaneesh Vinoth Kannan]
+Copyright (c) [2026] [Matthew Blanke, Arya Sadeghi, Yuhang Jiang, Divyani Punj, Matt Blanke, Jiaming Liu, Divya Subramonian, Avaneesh Vinoth Kannan]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
