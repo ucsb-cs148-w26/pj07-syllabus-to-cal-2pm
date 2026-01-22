@@ -125,6 +125,43 @@ struct SignUpView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 8)
 
+                    // Divider with "or"
+                    HStack {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 1)
+                        Text("or")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 8)
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 1)
+                    }
+                    .padding(.horizontal, 24)
+
+                    // Sign up with Google button
+                    Button(action: {
+                        navigateToPDFUpload = true
+                    }) {
+                        HStack {
+                            Image(systemName: "g.circle.fill")
+                                .font(.title2)
+                            Text("Sign up with Google")
+                                .font(.headline)
+                        }
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .padding(.horizontal, 24)
+
                     Spacer()
                         .frame(height: 40)
                 }
