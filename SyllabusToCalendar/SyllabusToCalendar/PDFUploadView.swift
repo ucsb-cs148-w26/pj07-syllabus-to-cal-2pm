@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  PDFUploadView.swift
 //  SyllabusToCalendar
 //
 //  Created by Divya Subramonian on 1/21/26.
@@ -8,7 +8,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct ContentView: View {
+struct PDFUploadView: View {
     @State private var showDocumentPicker = false
     @State private var pdfURL: URL?
     @State private var pdfFileName: String = "No file attached"
@@ -83,5 +83,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    PDFUploadView()
 }
