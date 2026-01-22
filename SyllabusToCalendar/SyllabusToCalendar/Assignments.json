@@ -1,0 +1,20 @@
+[
+    {
+        "className": "ECE 154B",
+        "assignmentType": "Homework",
+        "name": "Verilog CPU Project",
+        "dueDate": "2026-02-05"
+    },
+    {
+        "className": "ECE 154B",
+        "assignmentType": "Lab",
+        "name": "FPGA Setup",
+        "dueDate": "2026-02-07"
+    },
+    {
+        "className": "ECE 154B",
+        "assignmentType": "Project",
+        "name": "Final Report",
+        "dueDate": "2026-03-01"
+    }
+]
