@@ -1,0 +1,17 @@
+# Leadership Roles 
+
+| Date      | Name              | Activity                                                           |
+|-----------|-------------------|--------------------------------------------------------            |
+| 1.14.26   | Divyani Punj      | Led group discussion of problem scenario and user journey          |
+| 1.16.26   | Arya Sadeghi      | Led group disccusion of tech stack and intiial role assignments    |  
+| 1.21.26   | Matt Blanke       | Led group discussion of MVP                                        | 
+| 1.23.26   | Avaneesh V.K.     | Led group discussion in Retro #01                                  | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
+|           |                   |                                                                    | 
