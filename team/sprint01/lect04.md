@@ -1,6 +1,6 @@
 Project: Syllabus to Calendar
 
-Meeting Time: lect02 - 1.12.26
+Meeting Time: lect02 - 1.21.26
 
 Type of meeting: Sprint01 Planning Meeting
 
