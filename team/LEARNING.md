@@ -27,6 +27,7 @@ Will work on syllabus parsing logic, learning PDF text extraction, regex-based d
 **Divyani Punj**  
 
 **Jiaming Liu**  
+Will focus on the FastAPI backend API and contribute to the database integration logic as well.
 
 **Divya Subramonian**  
 
