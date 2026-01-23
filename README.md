@@ -101,18 +101,18 @@ Since we are building an iOS app, we use the simulator on Xcode to test/view our
 
 run pip install -r requirements.txt
 
-Dependencies
+### Dependencies
 
 TODO: List which libraries / add-ons you added to the project, and the purpose each of those add-ons serves in your app.
 
-Installation Steps
+### Installation Steps
 
 TODO: Describe the installation process (making sure you give complete instructions to get your project going from scratch). Instructions need to be such that a user can just copy/paste the commands to get things set up and running. Note that with the use of GitHub Actions, these instructions can eventually be fully automated (e.g. with act, you can run GitHub Actions locally).
 
-Functionality
+### Functionality
 
 TODO: Write usage instructions. Structuring it as a walkthrough can help structure this section, and showcase your features.
 
-Known Problems
+### Known Problems
 
 TODO: Describe any known issues, bugs, odd behaviors or code smells. Provide steps to reproduce the problem and/or name a file or a function where the problem lives.
