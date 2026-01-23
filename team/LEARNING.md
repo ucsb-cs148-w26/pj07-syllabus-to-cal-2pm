@@ -34,7 +34,7 @@ Will contributue to backend implementation: designing and implementing the outer
 **Divya Subramonian**  
 Will work on frontend development (as I have some prior experience), and will focus on backend and a little bit of OAuth as we move into creating and integrating Google Calendar events.
 
-**Avaneesh Vinoth Kannan**
+**Avaneesh Vinoth Kannan**  
 Will work on learning iOS app development as a whole, also learn more about API integration.
 
 ---
