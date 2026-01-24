@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from database.db_manager import init_db, fetch_user_creds, update_creds, add_user
+from database.db_manager import init_db, fetch_user_creds, update_creds
 import json
 from pydantic import BaseModel
 from typing import List, Optional
