@@ -283,3 +283,5 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+backend/DBNAME.db
+backend/database/DBNAME.db

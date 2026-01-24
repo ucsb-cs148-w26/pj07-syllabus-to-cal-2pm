@@ -1,13 +1,13 @@
 //
-//  SyllabusToCalendarUITestsLaunchTests.swift
-//  SyllabusToCalendarUITests
+//  PlannrUITestsLaunchTests.swift
+//  PlannrUITests
 //
-//  Created by Divya Subramonian on 1/21/26.
+//  Launch tests for Plannr
 //
 
 import XCTest
 
-final class SyllabusToCalendarUITestsLaunchTests: XCTestCase {
+final class PlannrUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
@@ -17,7 +17,6 @@ final class SyllabusToCalendarUITestsLaunchTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
         app.launch()

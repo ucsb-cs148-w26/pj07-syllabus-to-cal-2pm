@@ -1,16 +1,20 @@
 //
 //  SignInView.swift
-//  SyllabusToCalendar
+//  Plannr
 //
 //  Created for MVP login flow
 //
 
 import SwiftUI
+import AuthenticationServices
 
 struct SignInView: View {
+    @EnvironmentObject var authManager: AuthManager
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var navigateToPDFUpload: Bool = false
+    @State private var isAuthenticating: Bool = false
+    @State private var authError: String?
 
     var body: some View {
         ZStack {
@@ -67,9 +71,17 @@ struct SignInView: View {
                 }
                 .padding(.horizontal, 24)
 
+                // Error message
+                if let error = authError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 24)
+                }
+
                 Spacer()
 
-                // Sign In button
+                // Sign In button (email/password - placeholder for now)
                 Button(action: {
                     navigateToPDFUpload = true
                 }) {
@@ -100,13 +112,18 @@ struct SignInView: View {
 
                 // Sign in with Google button
                 Button(action: {
-                    navigateToPDFUpload = true
+                    startGoogleSignIn()
                 }) {
                     HStack {
-                        Image(systemName: "g.circle.fill")
-                            .font(.title2)
-                        Text("Sign in with Google")
-                            .font(.headline)
+                        if isAuthenticating {
+                            ProgressView()
+                                .tint(.black)
+                        } else {
+                            Image(systemName: "g.circle.fill")
+                                .font(.title2)
+                            Text("Sign in with Google")
+                                .font(.headline)
+                        }
                     }
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
@@ -118,6 +135,7 @@ struct SignInView: View {
                             .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                     )
                 }
+                .disabled(isAuthenticating)
                 .padding(.horizontal, 24)
 
                 Spacer()
@@ -134,11 +152,95 @@ struct SignInView: View {
         }
         .navigationTitle("Sign In")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: authManager.isAuthenticated) { isAuthenticated in
+            if isAuthenticated {
+                navigateToPDFUpload = true
+            }
+        }
+    }
+
+    private func startGoogleSignIn() {
+        isAuthenticating = true
+        authError = nil
+
+        guard let authURL = authManager.getGoogleAuthURL() else {
+            authError = "Could not create authentication URL"
+            isAuthenticating = false
+            return
+        }
+
+        // Use ASWebAuthenticationSession for secure OAuth
+        let session = ASWebAuthenticationSession(
+            url: authURL,
+            callbackURLScheme: "plannr"
+        ) { callbackURL, error in
+            isAuthenticating = false
+
+            if let error = error {
+                if (error as NSError).code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
+                    // User cancelled - no error message needed
+                    return
+                }
+                authError = "Authentication failed: \(error.localizedDescription)"
+                return
+            }
+
+            // The callback URL will be plannr://auth/callback?email=...&name=...
+            // But our backend returns JSON, so we need to fetch the result
+            if let callbackURL = callbackURL {
+                handleCallback(url: callbackURL)
+            }
+        }
+
+        session.presentationContextProvider = WebAuthContextProvider.shared
+        session.prefersEphemeralWebBrowserSession = false
+        session.start()
+    }
+
+    private func handleCallback(url: URL) {
+        // Parse the callback URL for parameters
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let queryItems = components.queryItems else {
+            authError = "Invalid callback URL"
+            return
+        }
+
+        var email: String?
+        var name: String?
+
+        for item in queryItems {
+            if item.name == "email" {
+                email = item.value
+            }
+            if item.name == "name" {
+                name = item.value
+            }
+        }
+
+        if let email = email {
+            authManager.completeAuthentication(email: email, name: name)
+        } else {
+            authError = "Could not get email from authentication"
+        }
+    }
+}
+
+// MARK: - Web Auth Context Provider
+class WebAuthContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+    static let shared = WebAuthContextProvider()
+
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first else {
+            return ASPresentationAnchor()
+        }
+        return window
     }
 }
 
 #Preview {
     NavigationStack {
         SignInView()
+            .environmentObject(AuthManager())
     }
 }

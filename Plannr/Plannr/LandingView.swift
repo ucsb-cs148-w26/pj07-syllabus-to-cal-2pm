@@ -1,6 +1,6 @@
 //
 //  LandingView.swift
-//  SyllabusToCalendar
+//  Plannr
 //
 //  Created for MVP login flow
 //
@@ -28,12 +28,12 @@ struct LandingView: View {
                             .font(.system(size: 80))
                             .foregroundColor(.white)
 
-                        Text("Syllabus to Calendar")
+                        Text("Plannr")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
 
-                        Text("Automatically organize your quarter or semester")
+                        Text("Automatically organize your course schedule")
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.9))
                     }
@@ -79,4 +79,5 @@ struct LandingView: View {
 
 #Preview {
     LandingView()
+        .environmentObject(AuthManager())
 }

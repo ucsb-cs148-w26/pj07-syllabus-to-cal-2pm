@@ -25,7 +25,9 @@ def fetch_user_creds(email):
     cursor = conn.cursor()
 
     cursor.execute("select google_credentials from users where email = ?", (email,))
-    row  = cursor.fetchone()
+    row = cursor.fetchone()
+    conn.close()
+
     if row is None:
         add_user(email)
         print(f"New user added. No credentials acquired.")

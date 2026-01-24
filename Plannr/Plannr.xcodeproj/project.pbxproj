@@ -24,25 +24,38 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		5AF01F6C2F216B1400744DC7 /* SyllabusToCalendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SyllabusToCalendar.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5AF01F792F216B1B00744DC7 /* SyllabusToCalendarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SyllabusToCalendarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5AF01F832F216B1B00744DC7 /* SyllabusToCalendarUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SyllabusToCalendarUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AF01F6C2F216B1400744DC7 /* Plannr.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Plannr.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AF01F792F216B1B00744DC7 /* PlannrTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PlannrTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AF01F832F216B1B00744DC7 /* PlannrUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PlannrUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		46BC838D2F248B7000A03E9A /* Exceptions for "Plannr" folder in "Plannr" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5AF01F6B2F216B1400744DC7 /* Plannr */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5AF01F6E2F216B1400744DC7 /* SyllabusToCalendar */ = {
+		5AF01F6E2F216B1400744DC7 /* Plannr */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SyllabusToCalendar;
+			exceptions = (
+				46BC838D2F248B7000A03E9A /* Exceptions for "Plannr" folder in "Plannr" target */,
+			);
+			path = Plannr;
 			sourceTree = "<group>";
 		};
-		5AF01F7C2F216B1B00744DC7 /* SyllabusToCalendarTests */ = {
+		5AF01F7C2F216B1B00744DC7 /* PlannrTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SyllabusToCalendarTests;
+			path = PlannrTests;
 			sourceTree = "<group>";
 		};
-		5AF01F862F216B1B00744DC7 /* SyllabusToCalendarUITests */ = {
+		5AF01F862F216B1B00744DC7 /* PlannrUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SyllabusToCalendarUITests;
+			path = PlannrUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,9 +88,9 @@
 		5AF01F632F216B1400744DC7 = {
 			isa = PBXGroup;
 			children = (
-				5AF01F6E2F216B1400744DC7 /* SyllabusToCalendar */,
-				5AF01F7C2F216B1B00744DC7 /* SyllabusToCalendarTests */,
-				5AF01F862F216B1B00744DC7 /* SyllabusToCalendarUITests */,
+				5AF01F6E2F216B1400744DC7 /* Plannr */,
+				5AF01F7C2F216B1B00744DC7 /* PlannrTests */,
+				5AF01F862F216B1B00744DC7 /* PlannrUITests */,
 				5AF01F6D2F216B1400744DC7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -85,9 +98,9 @@
 		5AF01F6D2F216B1400744DC7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5AF01F6C2F216B1400744DC7 /* SyllabusToCalendar.app */,
-				5AF01F792F216B1B00744DC7 /* SyllabusToCalendarTests.xctest */,
-				5AF01F832F216B1B00744DC7 /* SyllabusToCalendarUITests.xctest */,
+				5AF01F6C2F216B1400744DC7 /* Plannr.app */,
+				5AF01F792F216B1B00744DC7 /* PlannrTests.xctest */,
+				5AF01F832F216B1B00744DC7 /* PlannrUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,9 +108,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5AF01F6B2F216B1400744DC7 /* SyllabusToCalendar */ = {
+		5AF01F6B2F216B1400744DC7 /* Plannr */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5AF01F8D2F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "SyllabusToCalendar" */;
+			buildConfigurationList = 5AF01F8D2F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "Plannr" */;
 			buildPhases = (
 				5AF01F682F216B1400744DC7 /* Sources */,
 				5AF01F692F216B1400744DC7 /* Frameworks */,
@@ -108,18 +121,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5AF01F6E2F216B1400744DC7 /* SyllabusToCalendar */,
+				5AF01F6E2F216B1400744DC7 /* Plannr */,
 			);
-			name = SyllabusToCalendar;
+			name = Plannr;
 			packageProductDependencies = (
 			);
 			productName = SyllabusToCalendar;
-			productReference = 5AF01F6C2F216B1400744DC7 /* SyllabusToCalendar.app */;
+			productReference = 5AF01F6C2F216B1400744DC7 /* Plannr.app */;
 			productType = "com.apple.product-type.application";
 		};
-		5AF01F782F216B1B00744DC7 /* SyllabusToCalendarTests */ = {
+		5AF01F782F216B1B00744DC7 /* PlannrTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5AF01F902F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "SyllabusToCalendarTests" */;
+			buildConfigurationList = 5AF01F902F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "PlannrTests" */;
 			buildPhases = (
 				5AF01F752F216B1B00744DC7 /* Sources */,
 				5AF01F762F216B1B00744DC7 /* Frameworks */,
@@ -131,18 +144,18 @@
 				5AF01F7B2F216B1B00744DC7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5AF01F7C2F216B1B00744DC7 /* SyllabusToCalendarTests */,
+				5AF01F7C2F216B1B00744DC7 /* PlannrTests */,
 			);
-			name = SyllabusToCalendarTests;
+			name = PlannrTests;
 			packageProductDependencies = (
 			);
 			productName = SyllabusToCalendarTests;
-			productReference = 5AF01F792F216B1B00744DC7 /* SyllabusToCalendarTests.xctest */;
+			productReference = 5AF01F792F216B1B00744DC7 /* PlannrTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		5AF01F822F216B1B00744DC7 /* SyllabusToCalendarUITests */ = {
+		5AF01F822F216B1B00744DC7 /* PlannrUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5AF01F932F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "SyllabusToCalendarUITests" */;
+			buildConfigurationList = 5AF01F932F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "PlannrUITests" */;
 			buildPhases = (
 				5AF01F7F2F216B1B00744DC7 /* Sources */,
 				5AF01F802F216B1B00744DC7 /* Frameworks */,
@@ -154,13 +167,13 @@
 				5AF01F852F216B1B00744DC7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				5AF01F862F216B1B00744DC7 /* SyllabusToCalendarUITests */,
+				5AF01F862F216B1B00744DC7 /* PlannrUITests */,
 			);
-			name = SyllabusToCalendarUITests;
+			name = PlannrUITests;
 			packageProductDependencies = (
 			);
 			productName = SyllabusToCalendarUITests;
-			productReference = 5AF01F832F216B1B00744DC7 /* SyllabusToCalendarUITests.xctest */;
+			productReference = 5AF01F832F216B1B00744DC7 /* PlannrUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -186,7 +199,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5AF01F672F216B1400744DC7 /* Build configuration list for PBXProject "SyllabusToCalendar" */;
+			buildConfigurationList = 5AF01F672F216B1400744DC7 /* Build configuration list for PBXProject "Plannr" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -200,9 +213,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5AF01F6B2F216B1400744DC7 /* SyllabusToCalendar */,
-				5AF01F782F216B1B00744DC7 /* SyllabusToCalendarTests */,
-				5AF01F822F216B1B00744DC7 /* SyllabusToCalendarUITests */,
+				5AF01F6B2F216B1400744DC7 /* Plannr */,
+				5AF01F782F216B1B00744DC7 /* PlannrTests */,
+				5AF01F822F216B1B00744DC7 /* PlannrUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -258,12 +271,12 @@
 /* Begin PBXTargetDependency section */
 		5AF01F7B2F216B1B00744DC7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5AF01F6B2F216B1400744DC7 /* SyllabusToCalendar */;
+			target = 5AF01F6B2F216B1400744DC7 /* Plannr */;
 			targetProxy = 5AF01F7A2F216B1B00744DC7 /* PBXContainerItemProxy */;
 		};
 		5AF01F852F216B1B00744DC7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5AF01F6B2F216B1400744DC7 /* SyllabusToCalendar */;
+			target = 5AF01F6B2F216B1400744DC7 /* Plannr */;
 			targetProxy = 5AF01F842F216B1B00744DC7 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -397,17 +410,19 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Plannr/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Divya-Subramonian.SyllabusToCalendar";
+				PRODUCT_BUNDLE_IDENTIFIER = com.plannr.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -424,17 +439,19 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Plannr/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Divya-Subramonian.SyllabusToCalendar";
+				PRODUCT_BUNDLE_IDENTIFIER = com.plannr.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -451,12 +468,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Divya-Subramonian.SyllabusToCalendarTests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.plannr.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SyllabusToCalendar.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SyllabusToCalendar";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Plannr.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Plannr";
 			};
 			name = Debug;
 		};
@@ -469,12 +486,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Divya-Subramonian.SyllabusToCalendarTests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.plannr.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SyllabusToCalendar.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SyllabusToCalendar";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Plannr.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Plannr";
 			};
 			name = Release;
 		};
@@ -485,7 +502,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Divya-Subramonian.SyllabusToCalendarUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.plannr.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -501,7 +518,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "Divya-Subramonian.SyllabusToCalendarUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = com.plannr.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -513,7 +530,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5AF01F672F216B1400744DC7 /* Build configuration list for PBXProject "SyllabusToCalendar" */ = {
+		5AF01F672F216B1400744DC7 /* Build configuration list for PBXProject "Plannr" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5AF01F8B2F216B1B00744DC7 /* Debug */,
@@ -522,7 +539,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5AF01F8D2F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "SyllabusToCalendar" */ = {
+		5AF01F8D2F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "Plannr" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5AF01F8E2F216B1B00744DC7 /* Debug */,
@@ -531,7 +548,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5AF01F902F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "SyllabusToCalendarTests" */ = {
+		5AF01F902F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "PlannrTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5AF01F912F216B1B00744DC7 /* Debug */,
@@ -540,7 +557,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5AF01F932F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "SyllabusToCalendarUITests" */ = {
+		5AF01F932F216B1B00744DC7 /* Build configuration list for PBXNativeTarget "PlannrUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5AF01F942F216B1B00744DC7 /* Debug */,
