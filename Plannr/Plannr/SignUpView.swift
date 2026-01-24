@@ -1,6 +1,6 @@
 //
 //  SignUpView.swift
-//  SyllabusToCalendar
+//  Plannr
 //
 //  Created for MVP login flow
 //

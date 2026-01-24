@@ -1,13 +1,13 @@
 //
-//  SyllabusToCalendarUITests.swift
-//  SyllabusToCalendarUITests
+//  PlannrUITests.swift
+//  PlannrUITests
 //
 //  Created by Divya Subramonian on 1/21/26.
 //
 
 import XCTest
 
-final class SyllabusToCalendarUITests: XCTestCase {
+final class PlannrUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

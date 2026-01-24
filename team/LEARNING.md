@@ -1,6 +1,6 @@
 # Learning Plan
 
-Our team is building **Syllabus to Calendar**, an iOS app that parses course syllabi and syncs important dates to Google Calendar. The team has **seven members** with varying levels of experience across iOS development, backend development, APIs, and databases.
+Our team is building **Plannr**, an iOS app that parses course syllabi and syncs important dates to Google Calendar. The team has **seven members** with varying levels of experience across iOS development, backend development, APIs, and databases.
 
 Overall, some team members have prior experience with mobile or backend development, while others are newer to these technologies. Most of the team has limited experience with **Swift/SwiftUI**, **FastAPI**, and **Google OAuth / Calendar APIs**, so these will be new learning areas for many of us.
 

@@ -17,7 +17,7 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 
 app = FastAPI(
-    title='Syllabus to Calendar API',
+    title='Plannr API',
     description='Upload your syllabus, the API parses it and uploads the relevant time slots to your Google Calendar'
 )
 
@@ -27,7 +27,7 @@ async def google_oauth_login():
     ...
 
 
-@app.post('/syllabus', tags=['Syllabus to Calendar'])
+@app.post('/syllabus', tags=['Plannr'])
 async def parse_syllabus(file: UploadFile = File(...)):
     try:
         print(f"\n=== NEW UPLOAD ===")
@@ -155,6 +155,6 @@ async def parse_with_gemini(syllabus_text: str) -> dict:
         return {"events": []}
 
 
-@app.post('/calendar', tags=['Syllabus to Calendar'])
+@app.post('/calendar', tags=['Plannr'])
 async def add_to_calendar():
     ...

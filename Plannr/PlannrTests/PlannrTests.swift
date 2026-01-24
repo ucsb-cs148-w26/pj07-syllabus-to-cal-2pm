@@ -1,14 +1,14 @@
 //
-//  SyllabusToCalendarTests.swift
-//  SyllabusToCalendarTests
+//  PlannrTests.swift
+//  PlannrTests
 //
 //  Created by Divya Subramonian on 1/21/26.
 //
 
 import Testing
-@testable import SyllabusToCalendar
+@testable import Plannr
 
-struct SyllabusToCalendarTests {
+struct PlannrTests {
 
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.

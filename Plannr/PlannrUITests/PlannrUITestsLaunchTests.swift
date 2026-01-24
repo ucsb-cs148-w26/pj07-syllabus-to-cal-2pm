@@ -1,13 +1,13 @@
 //
-//  SyllabusToCalendarUITestsLaunchTests.swift
-//  SyllabusToCalendarUITests
+//  PlannrUITestsLaunchTests.swift
+//  PlannrUITests
 //
 //  Created by Divya Subramonian on 1/21/26.
 //
 
 import XCTest
 
-final class SyllabusToCalendarUITestsLaunchTests: XCTestCase {
+final class PlannrUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
