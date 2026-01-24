@@ -1,5 +1,5 @@
-# Syllabus to Calendar App 
-Our Syllabus to Calendar app is an iOS app that takes in a user's syllabi and exports the important due dates, such as exams, homeworks, and more, to their Google Calendar. 
+# Plannr
+Plannr is an iOS app that takes in a user's syllabi and exports the important due dates, such as exams, homeworks, and more, to their Google Calendar. 
 
 A student can:
 - Upload syllabi as a picture or PDF

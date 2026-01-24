@@ -1,6 +1,6 @@
 //
 //  PDFUploadView.swift
-//  SyllabusToCalendar
+//  Plannr
 //
 //  Created by Divya Subramonian on 1/21/26.
 //
@@ -27,7 +27,7 @@ struct PDFUploadView: View {
             
             VStack(spacing: 20) {
                 // header
-                Text("Let's organize your semester")
+                Text("Let's organize your course schedules")
                     .font(.headline)
                     .foregroundColor(.white)
                 
