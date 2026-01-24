@@ -112,16 +112,16 @@ struct PDFUploadView: View {
                                                 .lineLimit(2)
                                         }
                                     }
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal)
-                                    .background(Color.gray.opacity(0.15))
-                                    .cornerRadius(10)
+                                    .padding()
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(Color.gray.opacity(0.15))
+                                        .cornerRadius(10)
                                 }
                             }
                             .padding(.horizontal)
                         }
                     }
-                    .frame(maxHeight: 400)
+                    .frame(maxHeight: 600)
                     .padding()
                     .background(Color.gray.opacity(0.08))
                     .cornerRadius(12)
