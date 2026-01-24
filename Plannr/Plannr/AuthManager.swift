@@ -33,8 +33,8 @@ class AuthManager: ObservableObject {
 
     /// Handle the OAuth callback URL
     func handleCallback(url: URL) {
-        // Parse the callback URL for auth result
-        // The backend returns JSON with email and name after successful auth
+        // Parse the custom URL callback (e.g. plannr://auth/callback?email=...&name=...)
+        // The backend includes the email and name as URL query parameters after successful auth
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             return
         }
