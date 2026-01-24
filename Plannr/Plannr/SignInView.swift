@@ -198,7 +198,6 @@ struct SignInView: View {
     }
 
     private func handleCallback(url: URL) {
-        // Parse the callback URL for parameters
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else {
             authError = "Invalid callback URL"
@@ -215,10 +214,17 @@ struct SignInView: View {
             if item.name == "name" {
                 name = item.value
             }
+            if item.name == "error" {
+                authError = item.value ?? "Authentication failed"
+                return
+            }
         }
 
         if let email = email {
             authManager.completeAuthentication(email: email, name: name)
+            DispatchQueue.main.async {
+                self.navigateToPDFUpload = true
+            }
         } else {
             authError = "Could not get email from authentication"
         }

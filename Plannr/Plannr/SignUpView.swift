@@ -348,6 +348,10 @@ struct SignUpView: View {
 
         if let email = email {
             authManager.completeAuthentication(email: email, name: name)
+            // Directly trigger navigation since onChange may not fire reliably
+            DispatchQueue.main.async {
+                self.navigateToPDFUpload = true
+            }
         } else {
             authError = "Could not get email from authentication"
         }

@@ -68,9 +68,6 @@ class AuthManager: ObservableObject {
 
     /// Called when OAuth completes successfully via web
     func completeAuthentication(email: String, name: String?) {
-        self.userEmail = email
-        self.userName = name
-
         // Save to UserDefaults
         UserDefaults.standard.set(email, forKey: "userEmail")
         if let name = name {
@@ -78,6 +75,8 @@ class AuthManager: ObservableObject {
         }
 
         DispatchQueue.main.async {
+            self.userEmail = email
+            self.userName = name
             self.isAuthenticated = true
             self.isLoading = false
         }
