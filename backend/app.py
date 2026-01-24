@@ -51,7 +51,7 @@ SCOPES = [
 init_db()
 
 app = FastAPI(
-    title='Syllabus to Calendar API',
+    title='Plannr API',
     description='Upload your syllabus, the API parses it and uploads the relevant time slots to your Google Calendar'
 )
 
@@ -142,7 +142,7 @@ async def google_oauth_login():
     return RedirectResponse(url='/auth/google')
 
 
-@app.post('/syllabus', tags=['Syllabus to Calendar'])
+@app.post('/syllabus', tags=['Plannr'])
 async def parse_syllabus(file: UploadFile = File(...)):
     try:
         print(f"\n=== NEW UPLOAD ===")

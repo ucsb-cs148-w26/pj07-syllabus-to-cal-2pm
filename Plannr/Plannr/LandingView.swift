@@ -33,7 +33,7 @@ struct LandingView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.white)
 
-                        Text("Automatically organize your course schedule")
+                        Text("Automatically organize your course schedules")
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.9))
                     }

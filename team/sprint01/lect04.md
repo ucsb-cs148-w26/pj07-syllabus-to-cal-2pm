@@ -1,4 +1,4 @@
-Project: Syllabus to Calendar
+Project: Plannr
 
 Meeting Time: lect02 - 1.21.26
 

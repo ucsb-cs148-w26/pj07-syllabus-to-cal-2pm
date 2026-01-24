@@ -24,13 +24,13 @@ struct PDFUploadView: View {
         ZStack {
             Color.black
                 .ignoresSafeArea(.all)
-
+            
             VStack(spacing: 20) {
                 // header
-                Text("Let's organize your course schedule")
+                Text("Let's organize your course schedules")
                     .font(.headline)
                     .foregroundColor(.white)
-
+                
                 // upload button
                 Button(action: {
                     showDocumentPicker = true
