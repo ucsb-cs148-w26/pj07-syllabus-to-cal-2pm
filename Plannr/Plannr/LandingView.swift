@@ -79,4 +79,5 @@ struct LandingView: View {
 
 #Preview {
     LandingView()
+        .environmentObject(AuthManager())
 }

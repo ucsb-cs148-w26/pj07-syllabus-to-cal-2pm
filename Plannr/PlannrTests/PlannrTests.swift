@@ -2,16 +2,32 @@
 //  PlannrTests.swift
 //  PlannrTests
 //
-//  Created by Divya Subramonian on 1/21/26.
+//  Unit tests for Plannr
 //
 
-import Testing
+import XCTest
 @testable import Plannr
 
-struct PlannrTests {
+final class PlannrTests: XCTestCase {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    override func setUpWithError() throws {
+        // Put setup code here. This method is called before the invocation of each test method in the class.
+    }
+
+    override func tearDownWithError() throws {
+        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    }
+
+    func testExample() throws {
+        // This is an example of a functional test case.
+        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    }
+
+    func testPerformanceExample() throws {
+        // This is an example of a performance test case.
+        self.measure {
+            // Put the code you want to measure the time of here.
+        }
     }
 
 }

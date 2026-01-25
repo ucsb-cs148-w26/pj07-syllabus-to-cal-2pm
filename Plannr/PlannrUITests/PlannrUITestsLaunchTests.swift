@@ -2,7 +2,7 @@
 //  PlannrUITestsLaunchTests.swift
 //  PlannrUITests
 //
-//  Created by Divya Subramonian on 1/21/26.
+//  Launch tests for Plannr
 //
 
 import XCTest
@@ -17,7 +17,6 @@ final class PlannrUITestsLaunchTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
         app.launch()

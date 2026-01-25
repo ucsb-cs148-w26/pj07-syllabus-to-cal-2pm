@@ -19,7 +19,7 @@ struct PDFUploadView: View {
     @State private var isUploading = false
     @State private var uploadError: String?
     @State private var parsedEvents: [CalendarEvent] = []
-    
+
     var body: some View {
         ZStack {
             Color.black
@@ -45,19 +45,19 @@ struct PDFUploadView: View {
                     .cornerRadius(10)
                 }
                 .disabled(isUploading)
-                
+
                 // display selected file name
                 Text(pdfFileName)
                     .font(.caption)
                     .foregroundColor(.gray)
                     .padding(.horizontal)
-                
+
                 // loading indicator
                 if isUploading {
                     ProgressView("Uploading...")
                         .tint(.blue)
                 }
-                
+
                 // error message
                 if let error = uploadError {
                     Text(error)
@@ -67,7 +67,7 @@ struct PDFUploadView: View {
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(8)
                 }
-                
+
                 // display parsed events
                 if !parsedEvents.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
@@ -75,7 +75,7 @@ struct PDFUploadView: View {
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding(.horizontal)
-                        
+
                         ScrollView {
                             VStack(alignment: .leading, spacing: 12) {
                                 ForEach(parsedEvents, id: \.title) { event in
@@ -84,17 +84,17 @@ struct PDFUploadView: View {
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
                                             .foregroundColor(.white)
-                                        
+
                                         HStack(spacing: 10) {
                                             Image(systemName: "calendar")
                                                 .font(.caption)
                                                 .foregroundColor(.blue)
-                                            
+
                                             Text(event.date)
                                                 .font(.caption)
                                                 .foregroundColor(.gray)
                                         }
-                                        
+
                                         HStack(spacing: 8) {
                                             Text(event.type)
                                                 .font(.caption2)
@@ -104,7 +104,7 @@ struct PDFUploadView: View {
                                                 .foregroundColor(.blue)
                                                 .cornerRadius(4)
                                         }
-                                        
+
                                         if !event.description.isEmpty {
                                             Text(event.description)
                                                 .font(.caption)
@@ -112,21 +112,21 @@ struct PDFUploadView: View {
                                                 .lineLimit(2)
                                         }
                                     }
-                                    .padding()
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(Color.gray.opacity(0.15))
-                                        .cornerRadius(10)
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal)
+                                    .background(Color.gray.opacity(0.15))
+                                    .cornerRadius(10)
                                 }
                             }
                             .padding(.horizontal)
                         }
                     }
-                    .frame(maxHeight: 600)
+                    .frame(maxHeight: 400)
                     .padding()
                     .background(Color.gray.opacity(0.08))
                     .cornerRadius(12)
                 }
-                
+
                 Spacer()
             }
             .padding()
@@ -140,13 +140,13 @@ struct PDFUploadView: View {
                     guard let url = urls.first else { return }
                     pdfURL = url
                     pdfFileName = url.lastPathComponent
-                    
+
                     // start accessing the security-scoped resource
                     if url.startAccessingSecurityScopedResource() {
                         // process and upload PDF (security scope is kept alive during upload)
                         uploadPDF(url: url)
                     }
-                    
+
                 case .failure(let error):
                     print("Error selecting file: \(error.localizedDescription)")
                     uploadError = "Error selecting file: \(error.localizedDescription)"
@@ -154,43 +154,43 @@ struct PDFUploadView: View {
             }
         }
     }
-    
+
     func uploadPDF(url: URL) {
         isUploading = true
         uploadError = nil
         parsedEvents = []
-        
+
         Task {
             defer {
                 // Stop accessing the security-scoped resource when done
                 url.stopAccessingSecurityScopedResource()
             }
-            
+
             do {
                 let data = try Data(contentsOf: url)
-                
+
                 // Create the request
                 var request = URLRequest(url: URL(string: "\(BACKEND_URL)/syllabus")!)
                 request.httpMethod = "POST"
-                
+
                 // Create multipart/form-data body
                 let boundary = UUID().uuidString
                 request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-                
+
                 var body = Data()
-                
+
                 // Add file data
                 body.append("--\(boundary)\r\n".data(using: .utf8)!)
                 body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(url.lastPathComponent)\"\r\n".data(using: .utf8)!)
                 body.append("Content-Type: application/pdf\r\n\r\n".data(using: .utf8)!)
                 body.append(data)
                 body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
-                
+
                 request.httpBody = body
-                
+
                 // Send the request
                 let (responseData, response) = try await URLSession.shared.data(for: request)
-                
+
                 if let httpResponse = response as? HTTPURLResponse {
                     if httpResponse.statusCode == 200 {
                         // Parse the response
