@@ -210,17 +210,113 @@ async def parse_with_gemini(syllabus_text: str) -> dict:
         model = genai.GenerativeModel('gemini-2.5-flash-lite')
         
         prompt = f"""
-        You are an AI assistant helping students manage their coursework. The user has uploaded the full syllabus of a university course. Your job is to read the syllabus and extract a structured list of **assignments, quizzes, and exams**, along with **what is due**, **when it's due**, and any relevant notes or policies.
+        You are an AI assistant that parses university course syllabi into a structured list of **graded deliverables**. The user has provided the full syllabus text. Your job is to accurately extract **what is due**, **when it is due**, and **how it should be labeled**, using careful temporal and contextual reasoning.
 
-## Instructions:
-- Each syllabus will be from a non-specified quarter, figure out which quarter it is for, either Fall, Winter, or Spring. Then infer which day of the week that starts for, Winter starts on the Jan 3 2026 this year for reference 
-. If the syllabus mentions **Week 1**, assume it starts on that date and calculate calendar dates accordingly.
-- Some items may be listed by **week number**, **specific date**, or **relative terms** like “final exam” or “Week 4 quiz.”
-- Ignore general policies, grading breakdowns, and university resource sections unless they are tied to due dates.
-- If given explicit directions, such as having TWO due dates for one assignment (regrades, initial attempt vs. revision) use advanced reasoning to schedule each hwk assignment.
-- sometimes, due dates might not be as simple, read, and understand the text such that you can make an educated inference. for example if theres a table that has each wk, closely look to see if there is anything due and list everything due
-- particularly look for end of lab, section, etc. keywords
-- Return your answer as a **structured JSON object** with this format:
+Your primary objective is **correct due-date inference**, even when dates are implicit, relative, or described indirectly.
+
+---
+
+## Step 1: Academic Term & Year Inference (MANDATORY)
+
+Before extracting any events, you must infer:
+- **Academic year** (e.g., 2024–2025, 2025–2026)
+- **Quarter** (Fall, Winter, or Spring)
+
+You must infer the year using:
+- Explicit years or date ranges in the syllabus (e.g., “Winter 2025”, “Spring Quarter 2024”)
+- Contextual clues (file headers, footers, grading policies, references to holidays, finals week)
+- If a date is written without a year (e.g., “Jan 15”), infer the year from the academic term
+
+ Do NOT assume the current calendar year - only assume current year if no other information is available 
+ Do NOT reuse years from prior examples or memory  
+ All dates must be consistent with the inferred academic year
+
+---
+
+## Step 2: Quarter Start Date Inference
+
+After determining the **quarter and year**, infer the **first instructional day** using standard university quarter conventions:
+
+- **Winter Quarter**: early January
+- **Spring Quarter**: late March or early April
+- **Fall Quarter**: late September
+
+If the syllabus explicitly states:
+- “Week 1”
+- “Classes begin on …”
+- “Instruction starts …”
+
+Use that as the authoritative anchor.
+
+If not explicitly stated:
+- Assume **Week 1 begins on the first Monday of the quarter’s instructional period**
+- Use that date as the anchor for all week-based calculations
+
+---
+
+## Step 3: Temporal Reasoning Rules (CRITICAL)
+
+You must resolve dates even when they are **implicit or relative**.
+
+Examples:
+- “Homework due at the end of lecture each week”
+- “Lab due by the end of section”
+- “Quiz every Friday”
+- “Assignments due weekly”
+- “Final exam during finals week”
+
+Rules:
+- Understand the **lecture and section schedule**, but **DO NOT output lectures or sections**
+- Use lecture timing ONLY to infer due dates
+- “End of lecture” → last lecture day of that week
+- “End of section/lab” → the scheduled section or lab day for that week
+- Finals week → use the university-standard finals window for the inferred quarter
+- If an assignment is described as “weekly” or “every week”, assign it to the corresponding day each week (e.g., every Friday)
+- For assignments with vague deadlines (e.g., “due next month”), use the **last instructional day of that month**
+
+If a due date cannot be inferred with reasonable confidence, **omit the event** rather than guessing.
+
+---
+
+## Step 4: What to Extract
+
+Extract ONLY graded or required deliverables:
+- Homework assignments
+- Labs
+- Quizzes
+- Midterms
+- Final exams
+- Projects, reports, checkpoints
+
+Ignore:
+- General policies
+- Grading breakdowns
+- Office hours
+- Lectures or readings (unless graded)
+
+---
+
+## Step 5: Titles and Naming Discipline
+
+- Preserve **canonical titles exactly as written**:
+  - `HW1`, `Homework 3`, `Lab 2`, `Midterm 1`, `Final Exam`
+- Do NOT invent names or normalize aggressively
+- If an assignment has multiple graded submissions (draft/final, submission/regrade):
+  - Create **separate events** with clear titles
+
+---
+
+## Step 6: Tables and Weekly Schedules
+
+- Carefully inspect tables, calendars, and week-by-week schedules
+- If a week lists **any due work**, extract it
+- Assume items listed in structured schedules are graded unless explicitly stated otherwise
+
+---
+
+## Output Format (STRICT)
+
+Return a **single JSON object** in this exact format:
         {{
             "events": [
                 {{
