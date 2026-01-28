@@ -15,4 +15,6 @@ jobs:
           username: ${{ vars.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            /root/pj07-syllabus-to-cal-2pm/.github/scripts/deploy.sh
+            echo "hello world"
+            whoami
+            pwd
