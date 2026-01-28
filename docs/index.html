@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plannr</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1a1a1a;
+            background: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            margin-top: 36px;
+        }
+
+        ul {
+            list-style: disc;
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        p {
+            margin-bottom: 16px;
+        }
+
+        footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        footer a {
+            color: #555;
+            text-decoration: underline;
+        }
+
+        footer a:hover {
+            color: #1a1a1a;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Plannr</h1>
+        <p class="tagline">An app that parses course syllabi and syncs assignments and deadlines to Google Calendar.</p>
+
+        <h2>What Plannr Does</h2>
+        <ul>
+            <li>Upload a course syllabus (PDF)</li>
+            <li>Automatically extract assignment deadlines, exam dates, quiz dates, and lab due dates</li>
+            <li>Create calendar events for each important date</li>
+            <li>Sync events to the user's Google Calendar (with permission)</li>
+        </ul>
+
+        <h2>How Google Data Is Used</h2>
+        <p>Plannr uses Google OAuth to authenticate users and requests Google Calendar access to create calendar events on behalf of the user. Plannr does not read or modify existing calendar events. Only events explicitly created by Plannr through the syncing process are added to the user's calendar.</p>
+
+        <h2>Who Plannr Is For</h2>
+        <p>Plannr is designed for university students who want an easier way to track coursework deadlines without manually entering every date into their calendar.</p>
+
+        <footer>
+            <div class="footer-links">
+                <a href="PRIVACY_POLICY.md">Privacy Policy</a>
+                <a href="TERMS_OF_SERVICE.md">Terms of Service</a>
+                <a href="mailto:plannr.ucsb@gmail.com">Contact: plannr.ucsb@gmail.com</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
