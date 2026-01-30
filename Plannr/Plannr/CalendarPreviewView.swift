@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct CalendarPreviewView: View {
-    let events: [CalendarEvent]
-    
+    @State private var events: [CalendarEvent]
+        
+    init(events: [CalendarEvent]) {
+        _events = State(initialValue: events)
+    }
+
     var body: some View {
         
         ZStack {
@@ -39,8 +43,10 @@ struct CalendarPreviewView: View {
                     
                     // Events list
                     VStack(spacing: 12) {
-                        ForEach(events, id: \.title) { event in
-                            EventCard(event: event)
+                        ForEach(events.indices, id: \.self) { index in
+                            EventCard(event: events[index]) { newColor in
+                                events[index].color = newColor
+                            }
                         }
                     }
                     .padding(.horizontal)
@@ -51,20 +57,28 @@ struct CalendarPreviewView: View {
     }
     
     // Color based on event type
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
-        }
-    }
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
 }
 
 struct EventCard: View {
     let event: CalendarEvent
+    @State private var selectedColor: Color
+    var onColorChange: ((Color) -> Void)?
     
+    init(event: CalendarEvent, onColorChange: ((Color) -> Void)? = nil) {
+        self.event = event
+        self.onColorChange = onColorChange
+        _selectedColor = State(initialValue: event.color)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack{
@@ -75,12 +89,20 @@ struct EventCard: View {
                 
                 Spacer()
                 
+                // Color Picker Button
+                ColorPicker("", selection: $selectedColor)
+                    .labelsHidden()
+                    .frame(width: 30, height: 30)
+                    .onChange(of: selectedColor) { newColor in
+                        onColorChange?(newColor)
+                    }
+                
                 Text(event.type.capitalized)
                     .font(.caption)
                     .fontWeight(.medium)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(colorForType(event.type))
+                    .background(selectedColor)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
@@ -109,15 +131,15 @@ struct EventCard: View {
         .cornerRadius(12)
     }
     
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
-        }
-    }
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
 }
 
 struct CalendarGridView: View {
@@ -267,7 +289,7 @@ struct DayColumn: View {
                 HStack(spacing: 2) {
                     ForEach(events.prefix(3), id: \.title) { event in
                         Circle()
-                            .fill(colorForType(event.type))
+                            .fill(event.color)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -291,15 +313,15 @@ struct DayColumn: View {
         return formatter.string(from: date).uppercased()
     }
     
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
-        }
-    }
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
 }
 
 struct MonthlyCalendarView: View {
@@ -428,7 +450,7 @@ struct DayCell: View {
             // Event dot
             if !events.isEmpty {
                 Circle()
-                    .fill(colorForType(events.first?.type ?? ""))
+                    .fill(events.first?.color ?? .gray)
                     .frame(width: 5, height: 5)
             }
         }
@@ -439,15 +461,15 @@ struct DayCell: View {
         .onTapGesture { onTap() }
     }
     
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
-        }
-    }
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
 }
 
 
