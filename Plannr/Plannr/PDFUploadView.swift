@@ -19,138 +19,144 @@ struct PDFUploadView: View {
     @State private var isUploading = false
     @State private var uploadError: String?
     @State private var parsedEvents: [CalendarEvent] = []
+    @State private var navigateToPreview = false
 
     var body: some View {
-        ZStack {
-            Color.black
-                .ignoresSafeArea(.all)
-            
-            VStack(spacing: 20) {
-                // header
-                Text("Let's organize your course schedules")
-                    .font(.headline)
-                    .foregroundColor(.white)
+        NavigationStack{
+            ZStack {
+                Color.black
+                    .ignoresSafeArea(.all)
                 
-                // upload button
-                Button(action: {
-                    showDocumentPicker = true
-                }) {
-                    HStack {
-                        Image(systemName: "doc.fill")
-                        Text("Upload PDF")
-                    }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                }
-                .disabled(isUploading)
-
-                // display selected file name
-                Text(pdfFileName)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-
-                // loading indicator
-                if isUploading {
-                    ProgressView("Uploading...")
-                        .tint(.blue)
-                }
-
-                // error message
-                if let error = uploadError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding()
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(8)
-                }
-
-                // display parsed events
-                if !parsedEvents.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Parsed Events")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal)
-
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 12) {
-                                ForEach(parsedEvents, id: \.title) { event in
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(event.title)
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.white)
-
-                                        HStack(spacing: 10) {
-                                            Image(systemName: "calendar")
-                                                .font(.caption)
-                                                .foregroundColor(.blue)
-
-                                            Text(event.date)
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
-                                        }
-
-                                        HStack(spacing: 8) {
-                                            Text(event.type)
-                                                .font(.caption2)
-                                                .fontWeight(.medium)
-                                                .padding(6)
-                                                .background(Color.blue.opacity(0.3))
-                                                .foregroundColor(.blue)
-                                                .cornerRadius(4)
-                                        }
-
-                                        if !event.description.isEmpty {
-                                            Text(event.description)
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
-                                                .lineLimit(2)
-                                        }
-                                    }
-                                    .padding(.vertical, 12)
-                                    .padding(.horizontal)
-                                    .background(Color.gray.opacity(0.15))
-                                    .cornerRadius(10)
-                                }
-                            }
-                            .padding(.horizontal)
+                VStack(spacing: 20) {
+                    // header
+                    Text("Let's organize your course schedules")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    // upload button
+                    Button(action: {
+                        showDocumentPicker = true
+                    }) {
+                        HStack {
+                            Image(systemName: "doc.fill")
+                            Text("Upload PDF")
                         }
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                     }
-                    .frame(maxHeight: 400)
-                    .padding()
-                    .background(Color.gray.opacity(0.08))
-                    .cornerRadius(12)
+                    .disabled(isUploading)
+                    
+                    // display selected file name
+                    Text(pdfFileName)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal)
+                    
+                    // loading indicator
+                    if isUploading {
+                        ProgressView("Uploading...")
+                            .tint(.blue)
+                    }
+                    
+                    // error message
+                    if let error = uploadError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .padding()
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    
+                    // display parsed events
+                    if !parsedEvents.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Parsed Events")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal)
+                            
+                            ScrollView {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    ForEach(parsedEvents, id: \.title) { event in
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text(event.title)
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(.white)
+                                            
+                                            HStack(spacing: 10) {
+                                                Image(systemName: "calendar")
+                                                    .font(.caption)
+                                                    .foregroundColor(.blue)
+                                                
+                                                Text(event.date)
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray)
+                                            }
+                                            
+                                            HStack(spacing: 8) {
+                                                Text(event.type)
+                                                    .font(.caption2)
+                                                    .fontWeight(.medium)
+                                                    .padding(6)
+                                                    .background(Color.blue.opacity(0.3))
+                                                    .foregroundColor(.blue)
+                                                    .cornerRadius(4)
+                                            }
+                                            
+                                            if !event.description.isEmpty {
+                                                Text(event.description)
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray)
+                                                    .lineLimit(2)
+                                            }
+                                        }
+                                        .padding(.vertical, 12)
+                                        .padding(.horizontal)
+                                        .background(Color.gray.opacity(0.15))
+                                        .cornerRadius(10)
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                        .frame(maxHeight: 400)
+                        .padding()
+                        .background(Color.gray.opacity(0.08))
+                        .cornerRadius(12)
+                    }
+                    
+                    Spacer()
                 }
-
-                Spacer()
+                .padding()
+                .fileImporter(
+                    isPresented: $showDocumentPicker,
+                    allowedContentTypes: [.pdf],
+                    allowsMultipleSelection: false
+                ) { result in
+                    switch result {
+                    case .success(let urls):
+                        guard let url = urls.first else { return }
+                        pdfURL = url
+                        pdfFileName = url.lastPathComponent
+                        
+                        // start accessing the security-scoped resource
+                        if url.startAccessingSecurityScopedResource() {
+                            // process and upload PDF (security scope is kept alive during upload)
+                            uploadPDF(url: url)
+                        }
+                        
+                    case .failure(let error):
+                        print("Error selecting file: \(error.localizedDescription)")
+                        uploadError = "Error selecting file: \(error.localizedDescription)"
+                    }
+                }
             }
-            .padding()
-            .fileImporter(
-                isPresented: $showDocumentPicker,
-                allowedContentTypes: [.pdf],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    guard let url = urls.first else { return }
-                    pdfURL = url
-                    pdfFileName = url.lastPathComponent
-
-                    // start accessing the security-scoped resource
-                    if url.startAccessingSecurityScopedResource() {
-                        // process and upload PDF (security scope is kept alive during upload)
-                        uploadPDF(url: url)
-                    }
-
-                case .failure(let error):
-                    print("Error selecting file: \(error.localizedDescription)")
-                    uploadError = "Error selecting file: \(error.localizedDescription)"
-                }
+            .navigationDestination(isPresented: $navigateToPreview) {
+                CalendarPreviewView(events: parsedEvents)
             }
         }
     }
@@ -198,6 +204,7 @@ struct PDFUploadView: View {
                             DispatchQueue.main.async {
                                 self.parsedEvents = jsonResponse.events
                                 self.isUploading = false
+                                self.navigateToPreview = true
                             }
                         } else {
                             DispatchQueue.main.async {
