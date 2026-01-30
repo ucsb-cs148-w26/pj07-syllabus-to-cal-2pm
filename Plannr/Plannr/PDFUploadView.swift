@@ -231,12 +231,20 @@ struct PDFUploadView: View {
 }
 
 // MARK: - Models
+
+enum EventStatus: String, Codable {
+    case pending
+    case accepted
+    case declined
+}
+
 struct CalendarEvent: Codable {
-    let title: String
-    let date: String
-    let type: String
-    let description: String
+    var title: String
+    var date: String
+    var type: String
+    var description: String
     var colorHex: String = "007AFF"
+    var status: EventStatus = .pending
     
     var color: Color {
         get { Color(hex: colorHex) }

@@ -9,6 +9,9 @@ import SwiftUI
 
 struct CalendarPreviewView: View {
     @State private var events: [CalendarEvent]
+    @State private var showingEditSheet = false
+    @State private var editingEvent: CalendarEvent?
+    @State private var editingEventIndex: Int?
         
     init(events: [CalendarEvent]) {
         _events = State(initialValue: events)
@@ -44,14 +47,36 @@ struct CalendarPreviewView: View {
                     // Events list
                     VStack(spacing: 12) {
                         ForEach(events.indices, id: \.self) { index in
-                            EventCard(event: events[index]) { newColor in
-                                events[index].color = newColor
-                            }
+                            EventCard(
+                                event: events[index],
+                                onColorChange: { newColor in
+                                    events[index].color = newColor
+                                },
+                                onEdit: {
+                                    editingEvent = events[index]
+                                    editingEventIndex = index
+                                    showingEditSheet = true
+                                },
+                                onAccept: {
+                                    events[index].status = .accepted
+                                },
+                                onDecline: {
+                                    events[index].status = .declined
+                                }
+                            )
                         }
                     }
                     .padding(.horizontal)
                 }
                 .padding(.top)
+            }
+            .sheet(isPresented: $showingEditSheet) {
+                if let event = editingEvent, let index = editingEventIndex {
+                    EventEditView(event: event) { updatedEvent in
+                        events[index] = updatedEvent
+                        showingEditSheet = false
+                    }
+                }
             }
         }
     }
@@ -72,13 +97,25 @@ struct EventCard: View {
     let event: CalendarEvent
     @State private var selectedColor: Color
     var onColorChange: ((Color) -> Void)?
+    var onEdit: (() -> Void)?
+    var onAccept: (() -> Void)?
+    var onDecline: (() -> Void)?
     
-    init(event: CalendarEvent, onColorChange: ((Color) -> Void)? = nil) {
+    init(
+        event: CalendarEvent,
+        onColorChange: ((Color) -> Void)? = nil,
+        onEdit: (() -> Void)? = nil,
+        onAccept: (() -> Void)? = nil,
+        onDecline: (() -> Void)? = nil
+    ) {
         self.event = event
         self.onColorChange = onColorChange
+        self.onEdit = onEdit
+        self.onAccept = onAccept
+        self.onDecline = onDecline
         _selectedColor = State(initialValue: event.color)
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack{
@@ -88,6 +125,18 @@ struct EventCard: View {
                     .foregroundColor(.white)
                 
                 Spacer()
+                
+                // Status badge (if accepted or declined)
+                if event.status != .pending {
+                    Text(event.status.rawValue.capitalized)
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(statusColor(event.status))
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
                 
                 // Color Picker Button
                 ColorPicker("", selection: $selectedColor)
@@ -124,6 +173,64 @@ struct EventCard: View {
                     .foregroundColor(.gray)
                     .lineLimit(2)
             }
+            
+            // Action buttons
+            HStack(spacing: 8) {
+                // Edit button
+                Button(action: {
+                    onEdit?()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                            .font(.caption)
+                        Text("Edit")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.blue.opacity(0.6))
+                    .cornerRadius(8)
+                }
+                
+                // Accept button
+                Button(action: {
+                    onAccept?()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: event.status == .accepted ? "checkmark.circle.fill" : "checkmark.circle")
+                            .font(.caption)
+                        Text("Accept")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(event.status == .accepted ? Color.green : Color.green.opacity(0.6))
+                    .cornerRadius(8)
+                }
+                
+                // Decline button
+                Button(action: {
+                    onDecline?()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: event.status == .declined ? "xmark.circle.fill" : "xmark.circle")
+                            .font(.caption)
+                        Text("Decline")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(event.status == .declined ? Color.red : Color.red.opacity(0.6))
+                    .cornerRadius(8)
+                }
+            }
+            .padding(.top, 4)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -131,6 +238,17 @@ struct EventCard: View {
         .cornerRadius(12)
     }
     
+    func statusColor(_ status: EventStatus) -> Color {
+        switch status {
+        case .pending:
+            return .gray
+        case .accepted:
+            return .green
+        case .declined:
+            return .red
+        }
+    }
+
 //    func colorForType(_ type: String) -> Color {
 //        switch type.lowercased() {
 //        case "homework": return .blue
@@ -140,6 +258,117 @@ struct EventCard: View {
 //        default: return .gray
 //        }
 //    }
+}
+
+struct EventEditView: View {
+    @State private var editedEvent: CalendarEvent
+    @State private var selectedColor: Color
+    let onSave: (CalendarEvent) -> Void
+    @Environment(\.dismiss) var dismiss
+    
+    init(event: CalendarEvent, onSave: @escaping (CalendarEvent) -> Void) {
+        _editedEvent = State(initialValue: event)
+        _selectedColor = State(initialValue: event.color)
+        self.onSave = onSave
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Title field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Title")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            TextField("Event title", text: $editedEvent.title)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        // Date field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Date")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            TextField("yyyy-MM-dd", text: $editedEvent.date)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        // Type field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Type")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            TextField("Event type", text: $editedEvent.type)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        // Description field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Description")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            TextEditor(text: $editedEvent.description)
+                                .frame(height: 100)
+                                .padding(8)
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        // Color picker
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Color")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            ColorPicker("Event Color", selection: $selectedColor)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(8)
+                        }
+                        
+                        // Save button
+                        Button(action: {
+                            editedEvent.color = selectedColor
+                            onSave(editedEvent)
+                        }) {
+                            Text("Save Changes")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue)
+                                .cornerRadius(12)
+                        }
+                        .padding(.top)
+                    }
+                    .padding()
+                }
+            }
+            .navigationTitle("Edit Event")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.white)
+                }
+            }
+        }
+    }
 }
 
 struct CalendarGridView: View {
