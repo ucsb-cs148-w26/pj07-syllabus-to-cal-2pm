@@ -19,52 +19,105 @@ struct CalendarPreviewView: View {
         
         ZStack {
             Color.black.ignoresSafeArea()
-            
-            ScrollView{
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Your Calendar")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal)
-                    
-                    CalendarGridView(events: events)
-                        .padding(.horizontal)
-                    
-                    Text("Your Events")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal)
-                    
-                    Text("\(events.count) items found")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal)
-                    
-                    // Events list
-                    VStack(spacing: 12) {
-                        ForEach(events.indices, id: \.self) { index in
-                            EventCard(
-                                event: events[index],
-                                onColorChange: { newColor in
-                                    events[index].color = newColor
-                                },
-                                onEdit: {
-                                    editingEvent = events[index]
-                                },
-                                onAccept: {
+
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Your Calendar")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal)
+
+                        CalendarGridView(events: events)
+                            .padding(.horizontal)
+
+                        // Accept All / Decline All buttons
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                for index in events.indices {
                                     events[index].status = .accepted
-                                },
-                                onDecline: {
+                                }
+                            }) {
+                                Text("Accept All")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Color.green)
+                                    .cornerRadius(8)
+                            }
+
+                            Button(action: {
+                                for index in events.indices {
                                     events[index].status = .declined
                                 }
-                            )
+                            }) {
+                                Text("Decline All")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Color.red)
+                                    .cornerRadius(8)
+                            }
                         }
+                        .padding(.horizontal)
+
+                        Text("Your Events")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal)
+
+                        Text("\(events.count) items found")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
+
+                        // Events list
+                        VStack(spacing: 12) {
+                            ForEach(events.indices, id: \.self) { index in
+                                EventCard(
+                                    event: events[index],
+                                    onColorChange: { newColor in
+                                        events[index].color = newColor
+                                    },
+                                    onEdit: {
+                                        editingEvent = events[index]
+                                    },
+                                    onAccept: {
+                                        events[index].status = events[index].status == .accepted ? .pending : .accepted
+                                    },
+                                    onDecline: {
+                                        events[index].status = events[index].status == .declined ? .pending : .declined
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
+                    .padding(.top)
+                    .padding(.bottom, 16)
                 }
-                .padding(.top)
+
+                // Sticky Sync button
+                Button(action: {
+                    // TODO: Sync action
+                }) {
+                    Text("Sync!")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                .background(Color.black)
             }
             .sheet(item: $editingEvent) { event in
                 EventEditView(event: event) { updatedEvent in
