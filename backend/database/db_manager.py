@@ -1,10 +1,12 @@
 import sqlite3
 import json # I assume we are gonna use json for calendar info storage
 import os
+import pathlib
 from dotenv import load_dotenv
 
 load_dotenv()
-DB_NAME = os.getenv("DB_FILEPATH", "SAMPLE.db")
+current_dir = pathlib.Path(__file__).parent.resolve()
+DB_NAME = current_dir / os.getenv("DB_FILEPATH", "SAMPLE.db")
 
 
 def init_db():
