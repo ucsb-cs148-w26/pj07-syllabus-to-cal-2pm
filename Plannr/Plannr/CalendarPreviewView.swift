@@ -8,9 +8,14 @@
 import SwiftUI
 
 struct CalendarPreviewView: View {
+    @EnvironmentObject var authManager: AuthManager
     @State private var events: [CalendarEvent]
     @State private var editingEvent: CalendarEvent?
-        
+    @State private var isSyncing = false
+    @State private var syncMessage: String?
+    @State private var syncSuccess: Bool?
+    @State private var showSyncAlert = false
+
     init(events: [CalendarEvent]) {
         _events = State(initialValue: events)
     }
@@ -105,16 +110,23 @@ struct CalendarPreviewView: View {
 
                 // Sticky Sync button
                 Button(action: {
-                    // TODO: Sync action
+                    syncToCalendar()
                 }) {
-                    Text("Sync!")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
+                    HStack(spacing: 8) {
+                        if isSyncing {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                        Text(isSyncing ? "Syncing..." : "Sync!")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(isSyncing ? Color.gray : Color.blue)
+                    .cornerRadius(12)
                 }
+                .disabled(isSyncing)
                 .padding(.horizontal)
                 .padding(.vertical, 12)
                 .background(Color.black)
@@ -127,9 +139,102 @@ struct CalendarPreviewView: View {
                     editingEvent = nil
                 }
             }
+            .alert(syncSuccess == true ? "Sync Complete" : "Sync Failed", isPresented: $showSyncAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(syncMessage ?? "")
+            }
         }
     }
-    
+
+    func syncToCalendar() {
+        guard let email = authManager.userEmail else {
+            syncMessage = "Not signed in. Please sign in with Google first."
+            syncSuccess = false
+            showSyncAlert = true
+            return
+        }
+
+        let acceptedEvents = events.filter { $0.status == .accepted }
+
+        if acceptedEvents.isEmpty {
+            syncMessage = "No accepted events to sync. Please accept events before syncing."
+            syncSuccess = false
+            showSyncAlert = true
+            return
+        }
+
+        isSyncing = true
+
+        Task {
+            do {
+                let syncEvents = acceptedEvents.map { event in
+                    [
+                        "title": event.title,
+                        "date": event.date,
+                        "description": event.description,
+                        "type": event.type
+                    ]
+                }
+
+                let requestBody: [String: Any] = ["events": syncEvents]
+                let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
+
+                guard let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                      let url = URL(string: "\(BACKEND_URL)/calendar?email=\(encodedEmail)") else {
+                    DispatchQueue.main.async {
+                        self.syncMessage = "Invalid email or URL."
+                        self.syncSuccess = false
+                        self.isSyncing = false
+                        self.showSyncAlert = true
+                    }
+                    return
+                }
+
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.httpBody = jsonData
+
+                let (responseData, response) = try await URLSession.shared.data(for: request)
+
+                if let httpResponse = response as? HTTPURLResponse {
+                    if httpResponse.statusCode == 200 {
+                        let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any]
+                        let message = json?["message"] as? String ?? "Successfully synced \(acceptedEvents.count) events."
+                        DispatchQueue.main.async {
+                            self.syncMessage = message
+                            self.syncSuccess = true
+                            self.isSyncing = false
+                            self.showSyncAlert = true
+                        }
+                    } else {
+                        var errorMsg = "Sync failed."
+                        if let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+                           let detail = json["error"] as? String {
+                            errorMsg = detail
+                        } else if let raw = String(data: responseData, encoding: .utf8) {
+                            errorMsg = raw
+                        }
+                        DispatchQueue.main.async {
+                            self.syncMessage = errorMsg
+                            self.syncSuccess = false
+                            self.isSyncing = false
+                            self.showSyncAlert = true
+                        }
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.syncMessage = "Error: \(error.localizedDescription)"
+                    self.syncSuccess = false
+                    self.isSyncing = false
+                    self.showSyncAlert = true
+                }
+            }
+        }
+    }
+
     // Color based on event type
 //    func colorForType(_ type: String) -> Color {
 //        switch type.lowercased() {
@@ -766,4 +871,5 @@ struct DayCell: View {
 
 #Preview {
     CalendarPreviewView(events: EventFixtures.sampleEvents)
+        .environmentObject(AuthManager())
 }
