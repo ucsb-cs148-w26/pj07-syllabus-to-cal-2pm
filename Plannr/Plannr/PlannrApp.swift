@@ -13,7 +13,7 @@ struct PlannrApp: App {
 
     var body: some Scene {
         WindowGroup {
-            LandingView()
+            SignInView()
                 .environmentObject(authManager)
                 .onOpenURL { url in
                     handleIncomingURL(url)

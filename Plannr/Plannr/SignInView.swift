@@ -10,152 +10,88 @@ import AuthenticationServices
 
 struct SignInView: View {
     @EnvironmentObject var authManager: AuthManager
-    @State private var email: String = ""
-    @State private var password: String = ""
-    @State private var navigateToPDFUpload: Bool = false
     @State private var isAuthenticating: Bool = false
     @State private var authError: String?
+    @State private var showPDFUpload: Bool = false
 
     var body: some View {
-        ZStack {
-            Color(.systemGroupedBackground)
+        if showPDFUpload {
+            PDFUploadView()
+        } else {
+            ZStack {
+                // Background gradient - UCSB Navy Blue
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0, green: 0.2, blue: 0.4),
+                        Color(red: 0, green: 0.15, blue: 0.35)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
                 .ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                // Header
-                VStack(spacing: 8) {
-                    Text("Welcome Back")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                VStack(spacing: 40) {
+                    Spacer()
 
-                    Text("Sign in to continue")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                .padding(.top, 40)
+                    // App logo/icon and branding
+                    VStack(spacing: 16) {
+                        Image(systemName: "calendar.badge.plus")
+                            .font(.system(size: 80))
+                            .foregroundColor(.white)
 
-                Spacer()
-                    .frame(height: 20)
+                        Text("Plannr")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
 
-                // Form fields
-                VStack(spacing: 16) {
-                    // Email field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Email")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-
-                        TextField("Enter your email", text: $email)
-                            .textContentType(.emailAddress)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(10)
-                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                        Text("Automatically organize your course schedules")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.9))
                     }
 
-                    // Password field
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Password")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                    Spacer()
 
-                        SecureField("Enter your password", text: $password)
-                            .textContentType(.password)
+                    // Error message
+                    if let error = authError {
+                        Text(error)
+                            .font(.subheadline)
+                            .foregroundColor(.red)
                             .padding()
-                            .background(Color.white)
-                            .cornerRadius(10)
-                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                            .background(Color.white.opacity(0.2))
+                            .cornerRadius(8)
+                            .padding(.horizontal, 32)
                     }
-                }
-                .padding(.horizontal, 24)
 
-                // Error message
-                if let error = authError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.horizontal, 24)
-                }
-
-                Spacer()
-
-                // Sign In button (email/password - placeholder for now)
-                Button(action: {
-                    navigateToPDFUpload = true
-                }) {
-                    Text("Sign In")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
-                }
-                .padding(.horizontal, 24)
-
-                // Divider with "or"
-                HStack {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 1)
-                    Text("or")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 8)
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 1)
-                }
-                .padding(.horizontal, 24)
-
-                // Sign in with Google button
-                Button(action: {
-                    startGoogleSignIn()
-                }) {
-                    HStack {
+                    // Sign in with Google button
+                    Button(action: {
+                        startGoogleSignIn()
+                    }) {
                         if isAuthenticating {
-                            ProgressView()
-                                .tint(.black)
+                            HStack(spacing: 12) {
+                                ProgressView()
+                                    .tint(.black)
+                                Text("Signing in...")
+                            }
                         } else {
-                            Image(systemName: "g.circle.fill")
-                                .font(.title2)
-                            Text("Sign in with Google")
-                                .font(.headline)
+                            HStack(spacing: 12) {
+                                Image(systemName: "globe")
+                                Text("Sign in with Google")
+                            }
                         }
                     }
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.white)
+                    .background(Color(red: 1, green: 0.72, blue: 0.11))
                     .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
+                    .disabled(isAuthenticating)
+                    .padding(.horizontal, 32)
+
+                    Spacer()
+                        .frame(height: 60)
                 }
-                .disabled(isAuthenticating)
-                .padding(.horizontal, 24)
-
-                Spacer()
-                    .frame(height: 40)
             }
-
-            // Navigation to PDF Upload
-            NavigationLink(
-                destination: PDFUploadView(),
-                isActive: $navigateToPDFUpload
-            ) {
-                EmptyView()
-            }
-        }
-        .navigationTitle("Sign In")
-        .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: authManager.isAuthenticated) { isAuthenticated in
-            if isAuthenticated {
-                navigateToPDFUpload = true
-            }
+            .navigationBarHidden(true)
         }
     }
 
@@ -223,7 +159,7 @@ struct SignInView: View {
         if let email = email {
             authManager.completeAuthentication(email: email, name: name)
             DispatchQueue.main.async {
-                self.navigateToPDFUpload = true
+                self.showPDFUpload = true
             }
         } else {
             authError = "Could not get email from authentication"
