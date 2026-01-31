@@ -200,15 +200,20 @@ struct PDFUploadView: View {
                 if let httpResponse = response as? HTTPURLResponse {
                     if httpResponse.statusCode == 200 {
                         // Parse the response
-                        if let jsonResponse = try? JSONDecoder().decode(SyllabusResponse.self, from: responseData) {
+                        do {
+                            let jsonResponse = try JSONDecoder().decode(SyllabusResponse.self, from: responseData)
                             DispatchQueue.main.async {
                                 self.parsedEvents = jsonResponse.events
                                 self.isUploading = false
                                 self.navigateToPreview = true
                             }
-                        } else {
+                        } catch {
+                            print("JSON decode error: \(error)")
+                            if let rawJSON = String(data: responseData, encoding: .utf8) {
+                                print("Raw response: \(rawJSON)")
+                            }
                             DispatchQueue.main.async {
-                                self.uploadError = "Failed to parse response"
+                                self.uploadError = "Failed to parse response: \(error.localizedDescription)"
                                 self.isUploading = false
                             }
                         }
@@ -238,17 +243,43 @@ enum EventStatus: String, Codable {
     case declined
 }
 
-struct CalendarEvent: Codable {
+struct CalendarEvent: Codable, Identifiable {
+    let id: UUID
     var title: String
     var date: String
     var type: String
     var description: String
     var colorHex: String = "007AFF"
     var status: EventStatus = .pending
-    
+
     var color: Color {
         get { Color(hex: colorHex) }
         set { colorHex = newValue.toHex() }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, date, type, description, colorHex, status
+    }
+
+    init(title: String, date: String, type: String, description: String, colorHex: String = "007AFF", status: EventStatus = .pending) {
+        self.id = UUID()
+        self.title = title
+        self.date = date
+        self.type = type
+        self.description = description
+        self.colorHex = colorHex
+        self.status = status
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        title = try container.decode(String.self, forKey: .title)
+        date = try container.decode(String.self, forKey: .date)
+        type = try container.decode(String.self, forKey: .type)
+        description = try container.decode(String.self, forKey: .description)
+        colorHex = try container.decodeIfPresent(String.self, forKey: .colorHex) ?? "007AFF"
+        status = try container.decodeIfPresent(EventStatus.self, forKey: .status) ?? .pending
     }
 }
 

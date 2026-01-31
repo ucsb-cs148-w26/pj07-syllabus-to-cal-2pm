@@ -9,9 +9,7 @@ import SwiftUI
 
 struct CalendarPreviewView: View {
     @State private var events: [CalendarEvent]
-    @State private var showingEditSheet = false
     @State private var editingEvent: CalendarEvent?
-    @State private var editingEventIndex: Int?
         
     init(events: [CalendarEvent]) {
         _events = State(initialValue: events)
@@ -54,8 +52,6 @@ struct CalendarPreviewView: View {
                                 },
                                 onEdit: {
                                     editingEvent = events[index]
-                                    editingEventIndex = index
-                                    showingEditSheet = true
                                 },
                                 onAccept: {
                                     events[index].status = .accepted
@@ -70,12 +66,12 @@ struct CalendarPreviewView: View {
                 }
                 .padding(.top)
             }
-            .sheet(isPresented: $showingEditSheet) {
-                if let event = editingEvent, let index = editingEventIndex {
-                    EventEditView(event: event) { updatedEvent in
+            .sheet(item: $editingEvent) { event in
+                EventEditView(event: event) { updatedEvent in
+                    if let index = events.firstIndex(where: { $0.id == updatedEvent.id }) {
                         events[index] = updatedEvent
-                        showingEditSheet = false
                     }
+                    editingEvent = nil
                 }
             }
         }
@@ -263,12 +259,20 @@ struct EventCard: View {
 struct EventEditView: View {
     @State private var editedEvent: CalendarEvent
     @State private var selectedColor: Color
+    @State private var selectedDate: Date
     let onSave: (CalendarEvent) -> Void
     @Environment(\.dismiss) var dismiss
-    
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
     init(event: CalendarEvent, onSave: @escaping (CalendarEvent) -> Void) {
         _editedEvent = State(initialValue: event)
         _selectedColor = State(initialValue: event.color)
+        _selectedDate = State(initialValue: Self.dateFormatter.date(from: event.date) ?? Date())
         self.onSave = onSave
     }
     
@@ -296,10 +300,12 @@ struct EventEditView: View {
                             Text("Date")
                                 .font(.headline)
                                 .foregroundColor(.white)
-                            TextField("yyyy-MM-dd", text: $editedEvent.date)
+                            DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                                .datePickerStyle(.wheel)
+                                .labelsHidden()
+                                .colorScheme(.dark)
                                 .padding()
                                 .background(Color.gray.opacity(0.2))
-                                .foregroundColor(.white)
                                 .cornerRadius(8)
                         }
                         
@@ -323,6 +329,7 @@ struct EventEditView: View {
                             TextEditor(text: $editedEvent.description)
                                 .frame(height: 100)
                                 .padding(8)
+                                .scrollContentBackground(.hidden)
                                 .background(Color.gray.opacity(0.2))
                                 .foregroundColor(.white)
                                 .cornerRadius(8)
@@ -334,6 +341,7 @@ struct EventEditView: View {
                                 .font(.headline)
                                 .foregroundColor(.white)
                             ColorPicker("Event Color", selection: $selectedColor)
+                                .foregroundColor(.white)
                                 .padding()
                                 .background(Color.gray.opacity(0.2))
                                 .cornerRadius(8)
@@ -341,6 +349,7 @@ struct EventEditView: View {
                         
                         // Save button
                         Button(action: {
+                            editedEvent.date = Self.dateFormatter.string(from: selectedDate)
                             editedEvent.color = selectedColor
                             onSave(editedEvent)
                         }) {
