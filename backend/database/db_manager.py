@@ -1,106 +1,229 @@
 import sqlite3
 import json # I assume we are gonna use json for calendar info storage
+import os
+import pathlib
+from dotenv import load_dotenv
 
-DB_NAME = "DBNAME.db"
+load_dotenv()
+current_dir = pathlib.Path(__file__).parent.resolve()
+DB_NAME = current_dir / os.getenv("DB_FILEPATH", "SAMPLE.db")
+
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+    '''
+    Initialize a new 'users' table if none exists.
+    Can be also used for database connection testing.
 
-    cursor.execute('''
-        create table if not exists users(
-            email text unique not null,
-            google_credentials text,
-            calendar text,
-            syllabi text
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
-    print(f"Database Initialization Successful.")
+    Table Attributes:
+        email: user's email address, primary key to the table
+        google_credentials: tokens used for OAuth, stored as text in json format
+        calendar: user's calendar data, stored as text in json format
+        syllabi: user's parsed syllabi data, stored as text in json format
+
+
+    Raise:
+        Exception: if failed to connect to the database
+    '''
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute('''
+                create table if not exists users(
+                    email text unique not null,
+                    google_credentials text,
+                    calendar text,
+                    syllabi text
+                )
+            ''')
+            
+            conn.commit()
+            print(f"Database Initialization Successful.")
+
+    except sqlite3.Error as e:
+        raise Exception("Database Connection Error: {e}")
 
 def fetch_user_creds(email):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+    '''
+    Fetch user's google credentials based on their email.
+    If the user already exist, auto-create a new user profile in the database.
 
-    cursor.execute("select google_credentials from users where email = ?", (email,))
-    row = cursor.fetchone()
-    conn.close()
+    Args:
+        email: user's email
+    
+    Returns:
+        User's google credentials as string, None if user does not exist
 
-    if row is None:
-        add_user(email)
-        print(f"New user added. No credentials acquired.")
-        return None
-    print(f"User {email} credentials acquired.")
-    return row[0]
+    Raise:
+        Exception: if failed to connect to the database
+    '''
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("select google_credentials from users where email = ?", (email,))
+            row = cursor.fetchone()
+
+        if row is None:
+            add_user(email)
+            print(f"New user auto-created. No credentials acquired.")
+            return None
+        print(f"User {email} credentials acquired.")
+        return row[0]
+    
+    except sqlite3.Error as e:
+        raise Exception("Failed to fetch user {email} credentials: {e}")
 
 def add_user(email):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+    '''
+    Create a new user profile with their email address only.
 
-    cursor.execute('''
-                       insert into users(email, google_credentials, calendar, syllabi)
-                       values (?, NULL, NULL, NULL)
-            ''', (email,))
+    Args:
+        email: user's email
     
-    conn.commit()
-    conn.close()
+    Raise:
+        Exception: if failed to connect to the database, or if the user already exists
+    '''
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute('''
+                            insert into users(email, google_credentials, calendar, syllabi)
+                            values (?, NULL, NULL, NULL)
+                    ''', (email,))
+            
+            conn.commit()
+            print(f"New User Created: {email}")
+    
+    except sqlite3.IntegrityError as e:
+        raise Exception("User Already Exists: {e}")
+    except sqlite3.Error as e:
+        raise Exception("Failed to add the user {email}: {e}")
 
 def remove_user(email):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+    '''
+    Remove an user from the database.
 
-    cursor.execute('delete from users where email = ?', (email,))
+    Args:
+        email: user's email
     
-    if cursor.rowcount > 0:
-        conn.commit()
-        print(f"User {email} removed.")
-    else:
-        print(f"User {email} not found.")
+    Raise:
+        Exception: if failed to connect to the database, or if the user does not exist
+    '''
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute('delete from users where email = ?', (email,))
+            
+            if cursor.rowcount > 0:
+                conn.commit()
+                print(f"User {email} removed.")
+            else:
+                raise Exception("Failed to remove the user as user {email} does not exist.")
+            
+    except sqlite3.Error as e:
+        raise Exception("Failed to remove the user {email}: {e}")
     
-    conn.close()
+    
 
 def update_creds(email, new_creds):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('select syllabi from users where email = ?', (email,))
-    row = cursor.fetchone()
-    
-    if row:
-        new_data_json = json.dumps(new_creds)
-        cursor.execute('''
-            update users 
-            set google_credentials = ?
-            where email = ?
-        ''', (new_data_json,email))
-        conn.commit()
-        print(f"Google Credentials updated for {email}.")
-    else:
-        print(f"Error: User {email} not found.")
+    '''
+    Update the google credentials of an existing user.
 
-    conn.close()
+    Args:
+        email: user's email
+        new_creds: google credentials of that user
+    
+    Raise:
+        Exception: if failed to connect to the database, or if the user does not exist
+    '''
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.execute('select syllabi from users where email = ?', (email,))
+            row = cursor.fetchone()
+            
+            if row:
+                new_data_json = json.dumps(new_creds)
+                cursor.execute('''
+                    update users 
+                    set google_credentials = ?
+                    where email = ?
+                ''', (new_data_json,email))
+                conn.commit()
+                print(f"Google Credentials updated for {email}.")
+            else:
+                raise Exception("Failed to update user {email} credentials as the user does not exist.")
+
+    except sqlite3.Error as e:
+        raise Exception("Failed to update user {email}'s credentials: {e}")
 
 
 def update_syllabi(email, new_syllabus_data):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('select syllabi from users where email = ?', (email,))
-    row = cursor.fetchone()
-    
-    if row:
-        new_data_json = json.dumps(new_syllabus_data)
-        cursor.execute('''
-            update users 
-            set syllabi = ? 
-            where email = ?
-        ''', (new_data_json, email))
-        conn.commit()
-        print(f"Syllabi updated for {email}.")
-    else:
-        print(f"Error: User {email} not found.")
+    '''
+    Update the syllabi info of an existing user.
 
-    conn.close()
+    Args:
+        email: user's email
+        new_syllabus_data: parsed syllabi text of that user
+    
+    Raise:
+        Exception: if failed to connect to the database, or if the user does not exist
+    '''
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.execute('select syllabi from users where email = ?', (email,))
+            row = cursor.fetchone()
+            
+            if row:
+                new_data_json = json.dumps(new_syllabus_data)
+                cursor.execute('''
+                    update users 
+                    set syllabi = ? 
+                    where email = ?
+                ''', (new_data_json, email))
+                conn.commit()
+                print(f"Syllabi updated for {email}.")
+            else:
+                raise Exception("Failed to update user {email} credentials as the user does not exist.")
+
+    except sqlite3.Error as e:
+        raise Exception("Failed to update user {email}'s syllabi: {e}")
+    
+def update_calendar(email, new_calendar):
+    '''
+    Update the calendar info of an existing user.
+
+    Args:
+        email: user's email
+        new_calendar: calendar info of that user
+    
+    Raise:
+        Exception: if failed to connect to the database, or if the user does not exist
+    '''
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.execute('select calendar from users where email = ?', (email,))
+            row = cursor.fetchone()
+            
+            if row:
+                new_data_json = json.dumps(new_calendar)
+                cursor.execute('''
+                    update users 
+                    set syllabi = ? 
+                    where email = ?
+                ''', (new_data_json, email))
+                conn.commit()
+                print(f"Calendar updated for {email}.")
+            else:
+                raise Exception("Failed to update user {email} calendar as the user does not exist.")
+
+    except sqlite3.Error as e:
+        raise Exception("Failed to update user {email}'s calendar: {e}")
 
 
 # --- Verification Block ---
@@ -135,4 +258,4 @@ if __name__ == "__main__":
     print(stored_json)
     
     # 4. Remove User
-    remove_user("student@test.edu")
+    #remove_user("student@test.edu")
