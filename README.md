@@ -92,27 +92,99 @@ System administrators responsible for maintaining app health, monitoring usage, 
 - Admins **do not** modify user calendars directly
 - Admins **do not** view full syllabus contents unless explicitly required for debugging
 
-## Deployment 
+## Deployment
 Since we are building an iOS app, we use the simulator on Xcode to test/view our app's functionality.
 
-## Installation
+# Installation
 
-### Prerequisites
+## Prerequisites
 
-run pip install -r requirements.txt
+- **Xcode 15+** (with iOS 17+ SDK) — for building and running the iOS app
+- **Python 3.10+** — for running the backend server
+- **pip** — Python package manager
+- **Git** — for cloning the repository
+- A **Google Cloud project** with the following APIs enabled:
+  - Google Calendar API
+  - Google OAuth 2.0
+  - Gemini API (Google Generative AI)
 
-### Dependencies
+## Dependencies
 
-TODO: List which libraries / add-ons you added to the project, and the purpose each of those add-ons serves in your app.
+### iOS App (Plannr)
+The iOS app uses only native Apple frameworks (no third-party dependencies):
+- **SwiftUI** — declarative UI framework
+- **AuthenticationServices** — Google OAuth sign-in flow
+- **UniformTypeIdentifiers** — PDF file type identification for the file picker
 
-### Installation Steps
+### Python Backend
+- **FastAPI** — web framework for the REST API
+- **Uvicorn** — ASGI server for running FastAPI
+- **google-generativeai** — Google Gemini AI SDK for syllabus parsing
+- **PyPDF2** — PDF text extraction
+- **python-dotenv** — environment variable management
+- **google-auth / google-auth-oauthlib** — Google OAuth 2.0 authentication
+- **google-api-python-client** — Google Calendar API client
+- **python-multipart** — multipart form-data parsing for file uploads
+- **pydantic** — request/response data validation
 
-TODO: Describe the installation process (making sure you give complete instructions to get your project going from scratch). Instructions need to be such that a user can just copy/paste the commands to get things set up and running. Note that with the use of GitHub Actions, these instructions can eventually be fully automated (e.g. with act, you can run GitHub Actions locally).
+## Installation Steps
 
-### Functionality
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm.git
+   cd pj07-syllabus-to-cal-2pm
+   ```
 
-TODO: Write usage instructions. Structuring it as a walkthrough can help structure this section, and showcase your features.
+2. **Set up the backend:**
+   ```bash
+   cd backend
+   python3 -m venv venv
+   source venv/bin/activate   # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-### Known Problems
+3. **Configure environment variables:**
+   ```bash
+   cp .env.SAMPLE .env
+   ```
+   Then edit `backend/.env` and fill in your credentials:
+   - `GEMINI_API_KEY` — your Google Gemini API key
+   - `GOOGLE_CLIENT_ID` — your Google OAuth client ID
+   - `GOOGLE_CLIENT_SECRET` — your Google OAuth client secret
+   - `GOOGLE_REDIRECT_URI` — defaults to `http://localhost:8000/auth/callback`
 
-TODO: Describe any known issues, bugs, odd behaviors or code smells. Provide steps to reproduce the problem and/or name a file or a function where the problem lives.
+4. **Start the backend server:**
+   ```bash
+   uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+5. **Open the iOS project in Xcode:**
+   ```bash
+   open Plannr/Plannr.xcodeproj
+   ```
+
+6. **Run the iOS app** on a simulator or device from Xcode (select a target and press Cmd+R).
+
+# Functionality
+
+1. **Sign In** — Tap "Sign In with Google" to authenticate via Google OAuth. This grants the app permission to add events to your Google Calendar.
+2. **Upload Syllabus** — Tap "Upload PDF" to select a syllabus PDF from your device. The file is sent to the backend for parsing.
+3. **Review Parsed Events** — After parsing, you are taken to the Calendar Preview screen where extracted events (homework, exams, quizzes, labs) are displayed in a weekly/monthly calendar view with color-coded cards.
+4. **Sync to Google Calendar** — Tap "Sync!" to push the parsed events to your Google Calendar as all-day events.
+
+# Known Problems
+
+- The backend URL is currently hardcoded to `http://localhost:8000` in `PDFUploadView.swift`, so the iOS app only works when the backend is running locally on the same machine as the simulator.
+- OAuth redirect requires the iOS simulator or a device that can handle the `plannr://` custom URL scheme.
+
+# Contributing
+
+1. Fork it!
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request :D
+
+# License
+
+This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for details.
