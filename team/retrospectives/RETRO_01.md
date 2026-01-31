@@ -32,3 +32,9 @@
 * Assesment: The retospective went well. All team members felt comfortable sharing their ideas. We were able to come to a conclusion effectively on what items we should focus on.
 * Advice: I would tell a future retrospective leader to encourage everyone to speak, and allot every team member their own time to share their ideas. This creates a comfortable environment for team members focused on improvement.
 
+## Experiment/Change
+
+* Description: For this sprint, we decided to focus on including more screenshots/videos in our PRs. 
+* Assessment: This experiment was a success. Each member was surveyed on whether reviewing PRs was easier since implementing this change. Every member said it was a valuable improvement and much-needed change so reviewers knew exactly what to look for. 
+* Decision Going Forward: The team will continue with this practice as it greatly benifited us. 
+
