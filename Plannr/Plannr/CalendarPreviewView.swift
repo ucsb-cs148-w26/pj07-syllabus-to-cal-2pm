@@ -8,62 +8,267 @@
 import SwiftUI
 
 struct CalendarPreviewView: View {
-    let events: [CalendarEvent]
-    
+    @EnvironmentObject var authManager: AuthManager
+    @State private var events: [CalendarEvent]
+    @State private var editingEvent: CalendarEvent?
+    @State private var isSyncing = false
+    @State private var syncMessage: String?
+    @State private var syncSuccess: Bool?
+    @State private var showSyncAlert = false
+
+    init(events: [CalendarEvent]) {
+        _events = State(initialValue: events)
+    }
+
     var body: some View {
         
         ZStack {
             Color.black.ignoresSafeArea()
-            
-            ScrollView{
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Your Calendar")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal)
-                    
-                    CalendarGridView(events: events)
-                        .padding(.horizontal)
-                    
-                    Text("Your Events")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal)
-                    
-                    Text("\(events.count) items found")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal)
-                    
-                    // Events list
-                    VStack(spacing: 12) {
-                        ForEach(events, id: \.title) { event in
-                            EventCard(event: event)
+
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Your Calendar")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal)
+
+                        CalendarGridView(events: events)
+                            .padding(.horizontal)
+
+                        // Accept All / Decline All buttons
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                for index in events.indices {
+                                    events[index].status = .accepted
+                                }
+                            }) {
+                                Text("Accept All")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Color.green)
+                                    .cornerRadius(8)
+                            }
+
+                            Button(action: {
+                                for index in events.indices {
+                                    events[index].status = .declined
+                                }
+                            }) {
+                                Text("Decline All")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Color.red)
+                                    .cornerRadius(8)
+                            }
                         }
+                        .padding(.horizontal)
+
+                        Text("Your Events")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal)
+
+                        Text("\(events.count) items found")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal)
+
+                        // Events list
+                        VStack(spacing: 12) {
+                            ForEach(events.indices, id: \.self) { index in
+                                EventCard(
+                                    event: events[index],
+                                    onColorChange: { newColor in
+                                        events[index].color = newColor
+                                    },
+                                    onEdit: {
+                                        editingEvent = events[index]
+                                    },
+                                    onAccept: {
+                                        events[index].status = events[index].status == .accepted ? .pending : .accepted
+                                    },
+                                    onDecline: {
+                                        events[index].status = events[index].status == .declined ? .pending : .declined
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
+                    .padding(.top)
+                    .padding(.bottom, 16)
                 }
-                .padding(.top)
+
+                // Sticky Sync button
+                Button(action: {
+                    syncToCalendar()
+                }) {
+                    HStack(spacing: 8) {
+                        if isSyncing {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                        Text(isSyncing ? "Syncing..." : "Sync!")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(isSyncing ? Color.gray : Color.blue)
+                    .cornerRadius(12)
+                }
+                .disabled(isSyncing)
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                .background(Color.black)
+            }
+            .sheet(item: $editingEvent) { event in
+                EventEditView(event: event) { updatedEvent in
+                    if let index = events.firstIndex(where: { $0.id == updatedEvent.id }) {
+                        events[index] = updatedEvent
+                    }
+                    editingEvent = nil
+                }
+            }
+            .alert(syncSuccess == true ? "Sync Complete" : "Sync Failed", isPresented: $showSyncAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(syncMessage ?? "")
             }
         }
     }
-    
-    // Color based on event type
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
+
+    func syncToCalendar() {
+        guard let email = authManager.userEmail else {
+            syncMessage = "Not signed in. Please sign in with Google first."
+            syncSuccess = false
+            showSyncAlert = true
+            return
+        }
+
+        let acceptedEvents = events.filter { $0.status == .accepted }
+
+        if acceptedEvents.isEmpty {
+            syncMessage = "No accepted events to sync. Please accept events before syncing."
+            syncSuccess = false
+            showSyncAlert = true
+            return
+        }
+
+        isSyncing = true
+
+        Task {
+            do {
+                let syncEvents = acceptedEvents.map { event in
+                    [
+                        "title": event.title,
+                        "date": event.date,
+                        "description": event.description,
+                        "type": event.type
+                    ]
+                }
+
+                let requestBody: [String: Any] = ["events": syncEvents]
+                let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
+
+                guard let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                      let url = URL(string: "\(BACKEND_URL)/calendar?email=\(encodedEmail)") else {
+                    DispatchQueue.main.async {
+                        self.syncMessage = "Invalid email or URL."
+                        self.syncSuccess = false
+                        self.isSyncing = false
+                        self.showSyncAlert = true
+                    }
+                    return
+                }
+
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.httpBody = jsonData
+
+                let (responseData, response) = try await URLSession.shared.data(for: request)
+
+                if let httpResponse = response as? HTTPURLResponse {
+                    if httpResponse.statusCode == 200 {
+                        let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any]
+                        let message = json?["message"] as? String ?? "Successfully synced \(acceptedEvents.count) events."
+                        DispatchQueue.main.async {
+                            self.syncMessage = message
+                            self.syncSuccess = true
+                            self.isSyncing = false
+                            self.showSyncAlert = true
+                        }
+                    } else {
+                        var errorMsg = "Sync failed."
+                        if let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+                           let detail = json["error"] as? String {
+                            errorMsg = detail
+                        } else if let raw = String(data: responseData, encoding: .utf8) {
+                            errorMsg = raw
+                        }
+                        DispatchQueue.main.async {
+                            self.syncMessage = errorMsg
+                            self.syncSuccess = false
+                            self.isSyncing = false
+                            self.showSyncAlert = true
+                        }
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.syncMessage = "Error: \(error.localizedDescription)"
+                    self.syncSuccess = false
+                    self.isSyncing = false
+                    self.showSyncAlert = true
+                }
+            }
         }
     }
+
+    // Color based on event type
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
 }
 
 struct EventCard: View {
     let event: CalendarEvent
+    @State private var selectedColor: Color
+    var onColorChange: ((Color) -> Void)?
+    var onEdit: (() -> Void)?
+    var onAccept: (() -> Void)?
+    var onDecline: (() -> Void)?
+    
+    init(
+        event: CalendarEvent,
+        onColorChange: ((Color) -> Void)? = nil,
+        onEdit: (() -> Void)? = nil,
+        onAccept: (() -> Void)? = nil,
+        onDecline: (() -> Void)? = nil
+    ) {
+        self.event = event
+        self.onColorChange = onColorChange
+        self.onEdit = onEdit
+        self.onAccept = onAccept
+        self.onDecline = onDecline
+        _selectedColor = State(initialValue: event.color)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -75,12 +280,32 @@ struct EventCard: View {
                 
                 Spacer()
                 
+                // Status badge (if accepted or declined)
+                if event.status != .pending {
+                    Text(event.status.rawValue.capitalized)
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(statusColor(event.status))
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+                
+                // Color Picker Button
+                ColorPicker("", selection: $selectedColor)
+                    .labelsHidden()
+                    .frame(width: 30, height: 30)
+                    .onChange(of: selectedColor) { newColor in
+                        onColorChange?(newColor)
+                    }
+                
                 Text(event.type.capitalized)
                     .font(.caption)
                     .fontWeight(.medium)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(colorForType(event.type))
+                    .background(selectedColor)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
@@ -102,6 +327,64 @@ struct EventCard: View {
                     .foregroundColor(.gray)
                     .lineLimit(2)
             }
+            
+            // Action buttons
+            HStack(spacing: 8) {
+                // Edit button
+                Button(action: {
+                    onEdit?()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                            .font(.caption)
+                        Text("Edit")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.blue.opacity(0.6))
+                    .cornerRadius(8)
+                }
+                
+                // Accept button
+                Button(action: {
+                    onAccept?()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: event.status == .accepted ? "checkmark.circle.fill" : "checkmark.circle")
+                            .font(.caption)
+                        Text("Accept")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(event.status == .accepted ? Color.green : Color.green.opacity(0.6))
+                    .cornerRadius(8)
+                }
+                
+                // Decline button
+                Button(action: {
+                    onDecline?()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: event.status == .declined ? "xmark.circle.fill" : "xmark.circle")
+                            .font(.caption)
+                        Text("Decline")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(event.status == .declined ? Color.red : Color.red.opacity(0.6))
+                    .cornerRadius(8)
+                }
+            }
+            .padding(.top, 4)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,13 +392,148 @@ struct EventCard: View {
         .cornerRadius(12)
     }
     
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
+    func statusColor(_ status: EventStatus) -> Color {
+        switch status {
+        case .pending:
+            return .gray
+        case .accepted:
+            return .green
+        case .declined:
+            return .red
+        }
+    }
+
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
+}
+
+struct EventEditView: View {
+    @State private var editedEvent: CalendarEvent
+    @State private var selectedColor: Color
+    @State private var selectedDate: Date
+    let onSave: (CalendarEvent) -> Void
+    @Environment(\.dismiss) var dismiss
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
+    init(event: CalendarEvent, onSave: @escaping (CalendarEvent) -> Void) {
+        _editedEvent = State(initialValue: event)
+        _selectedColor = State(initialValue: event.color)
+        _selectedDate = State(initialValue: Self.dateFormatter.date(from: event.date) ?? Date())
+        self.onSave = onSave
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Title field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Title")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            TextField("Event title", text: $editedEvent.title)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        // Date field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Date")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                                .datePickerStyle(.wheel)
+                                .labelsHidden()
+                                .colorScheme(.dark)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(8)
+                        }
+                        
+                        // Type field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Type")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            TextField("Event type", text: $editedEvent.type)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        // Description field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Description")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            TextEditor(text: $editedEvent.description)
+                                .frame(height: 100)
+                                .padding(8)
+                                .scrollContentBackground(.hidden)
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        // Color picker
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Color")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            ColorPicker("Event Color", selection: $selectedColor)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(8)
+                        }
+                        
+                        // Save button
+                        Button(action: {
+                            editedEvent.date = Self.dateFormatter.string(from: selectedDate)
+                            editedEvent.color = selectedColor
+                            onSave(editedEvent)
+                        }) {
+                            Text("Save Changes")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue)
+                                .cornerRadius(12)
+                        }
+                        .padding(.top)
+                    }
+                    .padding()
+                }
+            }
+            .navigationTitle("Edit Event")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.white)
+                }
+            }
         }
     }
 }
@@ -267,7 +685,7 @@ struct DayColumn: View {
                 HStack(spacing: 2) {
                     ForEach(events.prefix(3), id: \.title) { event in
                         Circle()
-                            .fill(colorForType(event.type))
+                            .fill(event.color)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -291,15 +709,15 @@ struct DayColumn: View {
         return formatter.string(from: date).uppercased()
     }
     
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
-        }
-    }
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
 }
 
 struct MonthlyCalendarView: View {
@@ -428,7 +846,7 @@ struct DayCell: View {
             // Event dot
             if !events.isEmpty {
                 Circle()
-                    .fill(colorForType(events.first?.type ?? ""))
+                    .fill(events.first?.color ?? .gray)
                     .frame(width: 5, height: 5)
             }
         }
@@ -439,18 +857,19 @@ struct DayCell: View {
         .onTapGesture { onTap() }
     }
     
-    func colorForType(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "homework": return .blue
-        case "exam": return .red
-        case "quiz": return .orange
-        case "lab": return .green
-        default: return .gray
-        }
-    }
+//    func colorForType(_ type: String) -> Color {
+//        switch type.lowercased() {
+//        case "homework": return .blue
+//        case "exam": return .red
+//        case "quiz": return .orange
+//        case "lab": return .green
+//        default: return .gray
+//        }
+//    }
 }
 
 
 #Preview {
     CalendarPreviewView(events: EventFixtures.sampleEvents)
+        .environmentObject(AuthManager())
 }

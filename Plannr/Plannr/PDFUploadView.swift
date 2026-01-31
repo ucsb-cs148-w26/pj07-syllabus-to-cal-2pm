@@ -200,15 +200,20 @@ struct PDFUploadView: View {
                 if let httpResponse = response as? HTTPURLResponse {
                     if httpResponse.statusCode == 200 {
                         // Parse the response
-                        if let jsonResponse = try? JSONDecoder().decode(SyllabusResponse.self, from: responseData) {
+                        do {
+                            let jsonResponse = try JSONDecoder().decode(SyllabusResponse.self, from: responseData)
                             DispatchQueue.main.async {
                                 self.parsedEvents = jsonResponse.events
                                 self.isUploading = false
                                 self.navigateToPreview = true
                             }
-                        } else {
+                        } catch {
+                            print("JSON decode error: \(error)")
+                            if let rawJSON = String(data: responseData, encoding: .utf8) {
+                                print("Raw response: \(rawJSON)")
+                            }
                             DispatchQueue.main.async {
-                                self.uploadError = "Failed to parse response"
+                                self.uploadError = "Failed to parse response: \(error.localizedDescription)"
                                 self.isUploading = false
                             }
                         }
@@ -231,11 +236,51 @@ struct PDFUploadView: View {
 }
 
 // MARK: - Models
-struct CalendarEvent: Codable {
-    let title: String
-    let date: String
-    let type: String
-    let description: String
+
+enum EventStatus: String, Codable {
+    case pending
+    case accepted
+    case declined
+}
+
+struct CalendarEvent: Codable, Identifiable {
+    let id: UUID
+    var title: String
+    var date: String
+    var type: String
+    var description: String
+    var colorHex: String = "007AFF"
+    var status: EventStatus = .pending
+
+    var color: Color {
+        get { Color(hex: colorHex) }
+        set { colorHex = newValue.toHex() }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, date, type, description, colorHex, status
+    }
+
+    init(title: String, date: String, type: String, description: String, colorHex: String = "007AFF", status: EventStatus = .pending) {
+        self.id = UUID()
+        self.title = title
+        self.date = date
+        self.type = type
+        self.description = description
+        self.colorHex = colorHex
+        self.status = status
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        title = try container.decode(String.self, forKey: .title)
+        date = try container.decode(String.self, forKey: .date)
+        type = try container.decode(String.self, forKey: .type)
+        description = try container.decode(String.self, forKey: .description)
+        colorHex = try container.decodeIfPresent(String.self, forKey: .colorHex) ?? "007AFF"
+        status = try container.decodeIfPresent(EventStatus.self, forKey: .status) ?? .pending
+    }
 }
 
 struct SyllabusResponse: Codable {
@@ -245,6 +290,43 @@ struct SyllabusResponse: Codable {
     let events: [CalendarEvent]
 }
 
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 6: // RGB (24-bit)
+            (r, g, b, a) = (int >> 16, int >> 8 & 0xFF, int & 0xFF, 255)
+        case 8: // ARGB (32-bit)
+            (r, g, b, a) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (r, g, b, a) = (0, 0, 0, 255)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+    
+    func toHex() -> String {
+        guard let components = UIColor(self).cgColor.components else { return "007AFF" }
+        
+        let r = Float(components[0])
+        let g = Float(components[1])
+        let b = Float(components[2])
+        
+        return String(format: "%02lX%02lX%02lX",
+                     lroundf(r * 255),
+                     lroundf(g * 255),
+                     lroundf(b * 255))
+    }
+}
 
 #Preview {
     PDFUploadView()
