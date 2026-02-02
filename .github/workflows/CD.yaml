@@ -15,4 +15,6 @@ jobs:
           username: ${{ vars.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            cd /home/bitnami/pj07-syllabus-to-cal-2pm
+            git pull origin main
             sudo systemctl restart plannr
