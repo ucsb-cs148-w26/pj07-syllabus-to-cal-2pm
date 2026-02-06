@@ -133,7 +133,7 @@
 
 ## 2. Response Actions (Action Items + User Stories)
 
-### 🔴 High Priority (MVP+ / Next Iteration)
+### High Priority (MVP+ / Next Iteration)
 
 **1. Multi-Syllabus Upload + Management**
 - _Action_: Support uploading multiple syllabi, deleting syllabi, and viewing syllabus history.
@@ -162,7 +162,7 @@
 
 ---
 
-### 🟡 Medium Priority (Growth Features)
+### Medium Priority (Growth Features)
 
 **6. Web App Version**
 - _Action_: Build lightweight web upload + parsing interface.
@@ -186,7 +186,7 @@
 
 ---
 
-### 🟢 Long-Term / Stretch
+### Long-Term / Stretch
 
 **10. Canvas / Gradescope / GOLD Integrations**
 - _Action_: Research APIs, privacy constraints, opt-in design.
