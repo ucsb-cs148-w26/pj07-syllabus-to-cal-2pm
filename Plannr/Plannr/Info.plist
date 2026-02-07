@@ -16,5 +16,9 @@
 		</dict>
 		<dict/>
 	</array>
+	
+	<key>NSCameraUsageDescription</key>
+    <string>This app needs camera access.</string>
+
 </dict>
 </plist>
