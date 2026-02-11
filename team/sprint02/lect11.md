@@ -18,6 +18,9 @@ Plannr is a student productivity app that parses course syllabi (PDFs) and autom
 - Add multiple syllabi
 - Different file/input types
 - Allow for .csv or .ics file type export
+  - Continue as guest
+  - Apple Calendar Support?
+- Update description in events of which class it is for (or add to title of event)
 - Update UI
 - Conflict detection, recurring event support, don't sync repeat events, etc.
 - Make it so colors associated with events trasfer to GCal when syncing
