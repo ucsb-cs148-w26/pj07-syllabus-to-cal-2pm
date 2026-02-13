@@ -28,8 +28,8 @@ struct CalendarPreviewView: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Your Calendar")
-                            .font(.title2)
+                        Text("Confirm Due Dates")
+                            .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                             .padding(.horizontal)
@@ -76,6 +76,7 @@ struct CalendarPreviewView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                             .padding(.horizontal)
+                            .padding(.top)
 
                         Text("\(events.count) items found")
                             .font(.subheadline)
@@ -117,13 +118,13 @@ struct CalendarPreviewView: View {
                             ProgressView()
                                 .tint(.white)
                         }
-                        Text(isSyncing ? "Syncing..." : "Sync!")
+                        Text(isSyncing ? "Syncing..." : "Sync to Google Calendar")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.black)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(isSyncing ? Color.gray : Color.blue)
+                    .background(isSyncing ? Color.gray : Color.yellow)
                     .cornerRadius(12)
                 }
                 .disabled(isSyncing)
@@ -292,20 +293,11 @@ struct EventCard: View {
                         .cornerRadius(8)
                 }
                 
-                // Color Picker Button
-                ColorPicker("", selection: $selectedColor)
-                    .labelsHidden()
-                    .frame(width: 30, height: 30)
-                    .onChange(of: selectedColor) { newColor in
-                        onColorChange?(newColor)
-                    }
-                
                 Text(event.type.capitalized)
                     .font(.caption)
                     .fontWeight(.medium)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(selectedColor)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
@@ -383,6 +375,16 @@ struct EventCard: View {
                     .background(event.status == .declined ? Color.red : Color.red.opacity(0.6))
                     .cornerRadius(8)
                 }
+                
+                Spacer()
+                
+                // Color Picker Button
+                ColorPicker("", selection: $selectedColor)
+                    .labelsHidden()
+                    .frame(width: 30, height: 30)
+                    .onChange(of: selectedColor) { newColor in
+                        onColorChange?(newColor)
+                    }
             }
             .padding(.top, 4)
         }
