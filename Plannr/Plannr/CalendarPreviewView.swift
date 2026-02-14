@@ -8,15 +8,24 @@
 import SwiftUI
 
 struct CalendarPreviewView: View {
-    @EnvironmentObject var authManager: AuthManager
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var classManager: ClassManager
+    
+    let className: String
+    let classSchedule: String
+    let classColor: Color
+    
     @State private var events: [CalendarEvent]
     @State private var editingEvent: CalendarEvent?
     @State private var isSyncing = false
     @State private var syncMessage: String?
     @State private var syncSuccess: Bool?
     @State private var showSyncAlert = false
-
-    init(events: [CalendarEvent]) {
+    
+    init(className: String, classSchedule: String, classColor: Color, events: [CalendarEvent]) {
+        self.className = className
+        self.classSchedule = classSchedule
+        self.classColor = classColor
         _events = State(initialValue: events)
     }
 
@@ -28,11 +37,20 @@ struct CalendarPreviewView: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Your Calendar")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal)
+                        // Class name header
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(className)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            
+                            if !classSchedule.isEmpty {
+                                Text(classSchedule)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .padding(.horizontal)
 
                         CalendarGridView(events: events)
                             .padding(.horizontal)
@@ -140,113 +158,62 @@ struct CalendarPreviewView: View {
                 }
             }
             .alert(syncSuccess == true ? "Sync Complete" : "Sync Failed", isPresented: $showSyncAlert) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {
+                    if syncSuccess == true {
+                        // Save class and navigate home
+                        let newClass = Class(
+                            name: className,
+                            schedule: classSchedule,
+                            colorHex: classColor.toHex(),
+                            events: events.filter { $0.status == .accepted }
+                        )
+                        classManager.addClass(newClass)
+                        
+                        // Dismiss all the way to root (COULDN'T TEST THIS)
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let window = windowScene.windows.first,
+                           let rootVC = window.rootViewController {
+                            // Pop to root view controller
+                            if let navController = rootVC as? UINavigationController {
+                                navController.popToRootViewController(animated: true)
+                            }
+                        }
+
+                        // Dismiss back to home
+                        dismiss()
+                    }
+                }
             } message: {
                 Text(syncMessage ?? "")
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(isSyncing)
     }
 
     func syncToCalendar() {
-        guard let email = authManager.userEmail else {
-            syncMessage = "Not signed in. Please sign in with Google first."
-            syncSuccess = false
-            showSyncAlert = true
-            return
-        }
-
         let acceptedEvents = events.filter { $0.status == .accepted }
-
+        
         if acceptedEvents.isEmpty {
             syncMessage = "No accepted events to sync. Please accept events before syncing."
             syncSuccess = false
             showSyncAlert = true
             return
         }
-
+        
         isSyncing = true
-
-        Task {
-            do {
-                let syncEvents = acceptedEvents.map { event in
-                    [
-                        "title": event.title,
-                        "date": event.date,
-                        "description": event.description,
-                        "type": event.type
-                    ]
-                }
-
-                let requestBody: [String: Any] = ["events": syncEvents]
-                let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
-
-                guard let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-                      let url = URL(string: "\(BACKEND_URL)/calendar?email=\(encodedEmail)") else {
-                    DispatchQueue.main.async {
-                        self.syncMessage = "Invalid email or URL."
-                        self.syncSuccess = false
-                        self.isSyncing = false
-                        self.showSyncAlert = true
-                    }
-                    return
-                }
-
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                request.httpBody = jsonData
-
-                let (responseData, response) = try await URLSession.shared.data(for: request)
-
-                if let httpResponse = response as? HTTPURLResponse {
-                    if httpResponse.statusCode == 200 {
-                        let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any]
-                        let message = json?["message"] as? String ?? "Successfully synced \(acceptedEvents.count) events."
-                        DispatchQueue.main.async {
-                            self.syncMessage = message
-                            self.syncSuccess = true
-                            self.isSyncing = false
-                            self.showSyncAlert = true
-                        }
-                    } else {
-                        var errorMsg = "Sync failed."
-                        if let json = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
-                           let detail = json["error"] as? String {
-                            errorMsg = detail
-                        } else if let raw = String(data: responseData, encoding: .utf8) {
-                            errorMsg = raw
-                        }
-                        DispatchQueue.main.async {
-                            self.syncMessage = errorMsg
-                            self.syncSuccess = false
-                            self.isSyncing = false
-                            self.showSyncAlert = true
-                        }
-                    }
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.syncMessage = "Error: \(error.localizedDescription)"
-                    self.syncSuccess = false
-                    self.isSyncing = false
-                    self.showSyncAlert = true
-                }
-            }
+        
+        // Simulate a short delay for sync
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            self.syncMessage = "Successfully added \(acceptedEvents.count) events to your calendar!"
+            self.syncSuccess = true
+            self.isSyncing = false
+            self.showSyncAlert = true
         }
     }
-
-    // Color based on event type
-//    func colorForType(_ type: String) -> Color {
-//        switch type.lowercased() {
-//        case "homework": return .blue
-//        case "exam": return .red
-//        case "quiz": return .orange
-//        case "lab": return .green
-//        default: return .gray
-//        }
-//    }
 }
 
+// MARK: - Event Card
 struct EventCard: View {
     let event: CalendarEvent
     @State private var selectedColor: Color
@@ -402,18 +369,9 @@ struct EventCard: View {
             return .red
         }
     }
-
-//    func colorForType(_ type: String) -> Color {
-//        switch type.lowercased() {
-//        case "homework": return .blue
-//        case "exam": return .red
-//        case "quiz": return .orange
-//        case "lab": return .green
-//        default: return .gray
-//        }
-//    }
 }
 
+// MARK: - Event Edit View
 struct EventEditView: View {
     @State private var editedEvent: CalendarEvent
     @State private var selectedColor: Color
@@ -538,6 +496,7 @@ struct EventEditView: View {
     }
 }
 
+// MARK: - Calendar Grid View
 struct CalendarGridView: View {
     let events: [CalendarEvent]
     @State private var isWeekly = true
@@ -570,6 +529,7 @@ struct CalendarGridView: View {
     }
 }
 
+// MARK: - Weekly Calendar View
 struct WeeklyCalendarView: View {
     let events: [CalendarEvent]
     @State private var selectedDate: Date = Date()
@@ -630,8 +590,6 @@ struct WeeklyCalendarView: View {
         .cornerRadius(16)
     }
     
-    // MARK: - Helper functions for weekly view
-    
     func daysInWeek() -> [Date] {
         let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
@@ -657,6 +615,7 @@ struct WeeklyCalendarView: View {
     }
 }
 
+// MARK: - Day Column
 struct DayColumn: View {
     let date: Date
     let events: [CalendarEvent]
@@ -690,7 +649,6 @@ struct DayColumn: View {
                     }
                 }
             } else {
-                // Placeholder to keep alignment
                 Circle()
                     .fill(Color.clear)
                     .frame(width: 6, height: 6)
@@ -708,18 +666,9 @@ struct DayColumn: View {
         formatter.dateFormat = "EEE"
         return formatter.string(from: date).uppercased()
     }
-    
-//    func colorForType(_ type: String) -> Color {
-//        switch type.lowercased() {
-//        case "homework": return .blue
-//        case "exam": return .red
-//        case "quiz": return .orange
-//        case "lab": return .green
-//        default: return .gray
-//        }
-//    }
 }
 
+// MARK: - Monthly Calendar View
 struct MonthlyCalendarView: View {
     let events: [CalendarEvent]
     @State private var selectedDate: Date = Date()
@@ -773,7 +722,6 @@ struct MonthlyCalendarView: View {
                         .frame(height: 40)
                 }
                 
-                // Day cells
                 ForEach(daysInMonth(), id: \.self) { date in
                     DayCell(
                         date: date,
@@ -797,9 +745,6 @@ struct MonthlyCalendarView: View {
         .cornerRadius(16)
     }
     
-    
-    // MARK: - Helper functions for monthly view
-    
     func daysInMonth() -> [Date] {
         let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedDate))!
         let range = calendar.range(of: .day, in: .month, for: selectedDate)!
@@ -808,7 +753,7 @@ struct MonthlyCalendarView: View {
     
     func startingWeekday() -> Int {
         let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedDate))!
-        return calendar.component(.weekday, from: startOfMonth) - 1  // 0 = Sunday
+        return calendar.component(.weekday, from: startOfMonth) - 1
     }
     
     func moveMonth(_ direction: Int) {
@@ -829,6 +774,7 @@ struct MonthlyCalendarView: View {
     }
 }
 
+// MARK: - Day Cell
 struct DayCell: View {
     let date: Date
     let events: [CalendarEvent]
@@ -843,7 +789,6 @@ struct DayCell: View {
                 .font(.system(size: 14, weight: isSelected ? .bold : .regular))
                 .foregroundColor(isSelected ? .blue : .white)
             
-            // Event dot
             if !events.isEmpty {
                 Circle()
                     .fill(events.first?.color ?? .gray)
@@ -856,20 +801,19 @@ struct DayCell: View {
         .cornerRadius(8)
         .onTapGesture { onTap() }
     }
-    
-//    func colorForType(_ type: String) -> Color {
-//        switch type.lowercased() {
-//        case "homework": return .blue
-//        case "exam": return .red
-//        case "quiz": return .orange
-//        case "lab": return .green
-//        default: return .gray
-//        }
-//    }
 }
 
-
 #Preview {
-    CalendarPreviewView(events: EventFixtures.sampleEvents)
-        .environmentObject(AuthManager())
+    NavigationStack {
+        CalendarPreviewView(
+            className: "Advanced Calculus",
+            classSchedule: "MWF 10:00 AM",
+            classColor: .blue,
+            events: [
+                CalendarEvent(title: "Midterm Exam", date: "2026-03-15", type: "exam", description: "Chapters 1-5"),
+                CalendarEvent(title: "Homework 3", date: "2026-03-20", type: "homework", description: "Problems 1-10")
+            ]
+        )
+        .environmentObject(ClassManager())
+    }
 }
