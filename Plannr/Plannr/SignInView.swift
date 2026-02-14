@@ -18,8 +18,7 @@ struct SignInView: View {
         if showPDFUpload {
             PDFUploadView()
         } else {
-            ZStack {
-                // Background gradient - UCSB Navy Blue
+            ZStack(alignment: .bottom) {
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Color(red: 0, green: 0.2, blue: 0.4),
@@ -30,66 +29,75 @@ struct SignInView: View {
                 )
                 .ignoresSafeArea()
 
-                VStack(spacing: 40) {
-                    Spacer()
+                VStack(spacing: 0) {
+                    Spacer(minLength: 24)
 
-                    // App logo/icon and branding
-                    VStack(spacing: 16) {
-                        Image(systemName: "calendar.badge.plus")
-                            .font(.system(size: 80))
-                            .foregroundColor(.white)
+                    VStack(spacing: 10) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(Color(red: 0.996, green: 0.722, blue: 0.074))
+
+                        StorkeTowerLineArt()
 
                         Text("Plannr")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                            .font(.system(size: 34, weight: .bold, design: .serif))
                             .foregroundColor(.white)
 
-                        Text("Automatically organize your course schedules")
-                            .font(.subheadline)
+                        Text("Syllabus to Schedule")
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.9))
                     }
+                    .padding(.top, 36)
 
                     Spacer()
 
-                    // Error message
                     if let error = authError {
                         Text(error)
                             .font(.subheadline)
                             .foregroundColor(.red)
-                            .padding()
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(8)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(Color.red.opacity(0.08))
+                            .cornerRadius(10)
                             .padding(.horizontal, 32)
+                            .padding(.bottom, 6)
                     }
 
-                    // Sign in with Google button
                     Button(action: {
                         startGoogleSignIn()
                     }) {
-                        if isAuthenticating {
-                            HStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            if isAuthenticating {
                                 ProgressView()
-                                    .tint(.black)
-                                Text("Signing in...")
-                            }
-                        } else {
-                            HStack(spacing: 12) {
+                                    .tint(.white)
+                            } else {
                                 Image(systemName: "globe")
-                                Text("Sign in with Google")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(.black)
                             }
+                            Text(isAuthenticating ? "Signing in..." : "Sign in with Google")
+                                .font(.system(size: 18, weight: .bold, design: .serif))
                         }
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color(red: 1, green: 0.72, blue: 0.11))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.clear, lineWidth: 0)
+                        )
+                        .cornerRadius(14)
+                        .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
                     }
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(red: 1, green: 0.72, blue: 0.11))
-                    .cornerRadius(12)
                     .disabled(isAuthenticating)
                     .padding(.horizontal, 32)
-
-                    Spacer()
-                        .frame(height: 60)
+                    .padding(.bottom, 40)
                 }
+
+                BottomWave()
+                    .frame(height: 120)
+                    .offset(y: 30)
+                    .ignoresSafeArea(edges: .bottom)
             }
             .navigationBarHidden(true)
         }
@@ -166,6 +174,76 @@ struct SignInView: View {
         }
     }
 }
+
+// MARK: - Storke Tower Line Art
+struct StorkeTowerLineArt: View {
+    private let primary = Color.white
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(primary, lineWidth: 2)
+                .frame(width: 48, height: 128)
+                .overlay(
+                    VStack(spacing: 10) {
+                        RoundedRectangle(cornerRadius: 1)
+                            .stroke(primary, lineWidth: 1)
+                            .frame(width: 16, height: 24)
+                            .padding(.top, 8)
+                        Rectangle()
+                            .fill(primary)
+                            .frame(width: 24, height: 4)
+                        Rectangle()
+                            .fill(primary)
+                            .frame(width: 32, height: 4)
+                        Spacer()
+                        Rectangle()
+                            .fill(primary)
+                            .frame(width: 64, height: 6)
+                            .padding(.bottom, 4)
+                    }
+                )
+        }
+        .frame(height: 140)
+    }
+}
+
+// MARK: - Bottom Wave Shape
+struct BottomWave: View {
+    private let primary = Color(red: 0.1, green: 0.5, blue: 0.9)
+
+    var body: some View {
+        GeometryReader { geometry in
+            Path { path in
+                let width = geometry.size.width
+                let height = geometry.size.height
+
+                path.move(to: CGPoint(x: 0, y: height * 0.5))
+                path.addCurve(
+                    to: CGPoint(x: width * 0.33, y: height * 0.7),
+                    control1: CGPoint(x: width * 0.12, y: height * 0.9),
+                    control2: CGPoint(x: width * 0.22, y: height * 0.55)
+                )
+                path.addCurve(
+                    to: CGPoint(x: width * 0.66, y: height * 0.55),
+                    control1: CGPoint(x: width * 0.45, y: height * 0.85),
+                    control2: CGPoint(x: width * 0.55, y: height * 0.35)
+                )
+                path.addCurve(
+                    to: CGPoint(x: width, y: height * 0.45),
+                    control1: CGPoint(x: width * 0.78, y: height * 0.8),
+                    control2: CGPoint(x: width * 0.9, y: height * 0.35)
+                )
+                path.addLine(to: CGPoint(x: width, y: height))
+                path.addLine(to: CGPoint(x: 0, y: height))
+                path.closeSubpath()
+            }
+            .fill(primary)
+        }
+    }
+}
+
+
 
 // MARK: - Web Auth Context Provider
 class WebAuthContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
