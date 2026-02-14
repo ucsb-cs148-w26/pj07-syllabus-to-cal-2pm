@@ -27,4 +27,11 @@ No iOS changes were needed since `ASWebAuthenticationSession` manages the browse
 
 **Usefulness:** Claude was very effective for this type of security-focused task. It understood OAuth 2.0 well enough to immediately spot the missing state validation — something that's easy to overlook when the flow "works" without it. Having it generate both the fix and comprehensive tests saved significant time compared to manually researching the vulnerability, writing the patch, and building test coverage from scratch. Going forward, using AI for security audits of authentication flows seems like a strong use case since these vulnerabilities follow well-documented patterns (OWASP) that LLMs are trained on.
 
+
 **Ensuring correctness:** I reviewed the generated code diff line-by-line before staging it. I verified that the state token was generated with `secrets.token_urlsafe` (cryptographically secure) rather than something predictable, confirmed the TTL and single-use logic were sound, and ran all 8 tests to validate the behavior. I also checked that the error handling redirected back to the iOS app with meaningful error messages rather than silently failing.
+
+# Divya
+
+I used Google Stitch in order to design the layout and flow of the PDF upload process. Instead of keeping the single PDF upload page, I wanted to transform adding a class/syllabus into a multi-screen process. I wasn’t sure how to go about this, so I consulted Google Stitch to produce sample wireframes and UI components that matched our current design aesthetic. It was very helpful in quickly mixing our existing layout with my ideas for how to organize the class adding process, and I will continue to use this tool for planning prior to implementing features. Whenever I was given designs that didn’t illustrate my requirements, I would keep remixing the output with specific details about the features I wanted to change/add. 
+
+I also used Claude to assist me in implementing certain frontend features. I found it very helpful, as I was able to find solutions quickly and better understand Swift. I needed to run and test the code after implementing a feature, as Claude occasionally made assumptions about available properties or methods. 
