@@ -29,14 +29,29 @@ struct PDFUploadView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
-                    .ignoresSafeArea(.all)
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0, green: 0.2, blue: 0.4),
+                        Color(red: 0, green: 0.15, blue: 0.35)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
-                VStack(spacing: 20) {
-                    // header
-                    Text("Let's organize your course schedules")
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: 20) {
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.system(size: 40))
                         .foregroundColor(.white)
+
+                    Text("Upload your syllabus")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+
+                    Text("Plannr parses your transcript and uploads relevant due dates to your Google Calendar.")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.9))
 
                     // upload / scan button
                     Button {
@@ -47,10 +62,12 @@ struct PDFUploadView: View {
                             Text("Upload or Scan PDF")
                         }
                         .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
+                        .background(Color.yellow)
+                        .foregroundColor(.black)
+                        .bold()
                         .cornerRadius(10)
                     }
+                    .padding(.vertical)
                     .disabled(isUploading)
                     .confirmationDialog(
                         "Select an option",
