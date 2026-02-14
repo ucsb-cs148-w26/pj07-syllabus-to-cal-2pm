@@ -117,5 +117,5 @@ def test_init_db_connection_error():
 def test_add_user_generic_db_error(mock_db):
     """Simulate a generic DB error during add_user."""
     with patch('sqlite3.connect', side_effect=sqlite3.Error("Disk full")):
-        with pytest.raises(Exception, match="Database Connection Error"):
-            db_manager.init_db()
+        with pytest.raises(Exception, match="Failed to add the user"):
+            db_manager.add_user("example@gmail.com")
