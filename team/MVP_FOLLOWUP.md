@@ -22,15 +22,13 @@
 ### B. Platform & Accessibility Gaps
 **Feedback**
 - Requests for:
-  - Web app version (laptop-first workflow for syllabi)
   - Cross-platform support
   - Apple Calendar / Outlook support
   - Export formats (.ics, CSV)
 - Many users download syllabi on laptops, not phones.
 
 **Assessment**
-- Limiting Plannr to iOS + Google Calendar restricts adoption.
-- Cross-platform access is a major growth lever.
+- Limiting Plannr to Google Calendar restricts adoption.
 
 ---
 
@@ -164,10 +162,11 @@
 
 ### Medium Priority (Growth Features)
 
-**6. Web App Version**
-- _Action_: Build lightweight web upload + parsing interface.
+**6. Notifications & Task View**
+- _Action_: Add in-app notifications + “urgent tasks” list view.
 - _User Story_:  
-  > As a student, I want to upload my syllabi from my laptop so I don’t have to transfer files to my phone.
+  > As a student, I want reminders and a task list so I don’t forget important deadlines.
+
 
 **7. More File Types + OCR**
 - _Action_: Support DOCX, images (OCR), and HTML syllabi.
@@ -198,10 +197,6 @@
 - _User Story_:  
   > As a student, I want Plannr to suggest study blocks before exams so I can plan ahead more effectively.
 
-**12. Notifications & Task View**
-- _Action_: Add in-app notifications + “urgent tasks” list view.
-- _User Story_:  
-  > As a student, I want reminders and a task list so I don’t forget important deadlines.
 
 ---
 
@@ -216,7 +211,6 @@
 
 ### Sprint 2 (Cross-Platform & Parsing)
 - [ ] .ics / CSV export
-- [ ] Web upload MVP
 - [ ] DOCX + OCR support
 - [ ] Bulk edit + filters
 - [ ] Error handling for bad syllabi
