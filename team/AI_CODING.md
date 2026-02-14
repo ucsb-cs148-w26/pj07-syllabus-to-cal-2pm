@@ -47,3 +47,35 @@ I used Gemini to generate a pytest suite for the `db_manager.py` to verify the f
 However, Genmini failed to recognize the connection error that may happen during each of the database funcitons, so I wrote the pytest functions for "database connection error" type exception to make sure all lines in `db_manager.py` are covered. I also had to explicitly tell Gemini to use @pytest.mark.parametrize to reduce the size of the testing program, so the testings for numerous edges cases aligned better with a clear view.
 
 While it can be seen that Gemini has the capability of producing general codes when the prompt is clear, it is also prone to missing some edges cases when getting into the details, especially when the context gets too long. I have to be aware of its pros and cons, and be cautious on checking AI-generated codes.
+
+# Arya
+
+
+## AI Tool Used
+
+**Google Stitch** – AI UI generation / prototyping tool
+
+## What I Did
+
+I used Google Stitch to generate a redesigned **Sign In page UI** for our app. The goal was to quickly explore cleaner layouts, better visual hierarchy, and improved placement of form inputs and OAuth buttons compared to our original design.
+
+## Outputs
+
+* A complete sign-in page mockup
+* Clear separation of primary (sign in) and secondary (OAuth / forgot password) actions
+* Layouts that could be easily translated into React/Tailwind components
+
+## Usefulness
+
+This tool was very effective for **rapid UI ideation**. It significantly reduced the time needed to explore multiple design directions and helped the team align on a cleaner UX before implementation. Going forward, it’s best used early in development to guide design decisions, not as final production output.
+
+## Validation & Fair Use
+
+* All AI-generated designs were manually reviewed and modified
+* No code or UI was copied directly into production
+* Accessibility, feasibility, and consistency with our stack were checked
+* Outputs were used as inspiration, ensuring fair use
+
+## Takeaway
+
+Google Stitch is a strong design accelerator for frontend work when paired with human judgment and manual implementation.
