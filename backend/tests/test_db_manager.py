@@ -2,7 +2,7 @@ import pytest
 import sqlite3
 import json
 from unittest.mock import patch
-import db_manager
+import database.db_manager as db_manager
 
 # --- Fixtures (Setup) ---
 
