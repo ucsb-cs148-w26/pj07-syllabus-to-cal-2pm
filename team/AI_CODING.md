@@ -35,3 +35,15 @@ No iOS changes were needed since `ASWebAuthenticationSession` manages the browse
 I used Google Stitch in order to design the layout and flow of the PDF upload process. Instead of keeping the single PDF upload page, I wanted to transform adding a class/syllabus into a multi-screen process. I wasn’t sure how to go about this, so I consulted Google Stitch to produce sample wireframes and UI components that matched our current design aesthetic. It was very helpful in quickly mixing our existing layout with my ideas for how to organize the class adding process, and I will continue to use this tool for planning prior to implementing features. Whenever I was given designs that didn’t illustrate my requirements, I would keep remixing the output with specific details about the features I wanted to change/add. 
 
 I also used Claude to assist me in implementing certain frontend features. I found it very helpful, as I was able to find solutions quickly and better understand Swift. I needed to run and test the code after implementing a feature, as Claude occasionally made assumptions about available properties or methods. 
+
+# Yuhang
+
+## Tool usedd
+Google Gemini 3.0 Pro
+
+## Experiment
+I used Gemini to generate a pytest suite for the `db_manager.py` to verify the functionalities and exception handling cases of the database utilities. Gemini generated a full set of testing verifying the correctness with both valid input and invalid input. I reviewed the generated code line by line and passed all tests when I ran them, confirming the correctness of the test functions and robustness of the `db_manager.py` utilities facing unexpected inputs.
+
+However, Genmini failed to recognize the connection error that may happen during each of the database funcitons, so I wrote the pytest functions for "database connection error" type exception to make sure all lines in `db_manager.py` are covered. I also had to explicitly tell Gemini to use @pytest.mark.parametrize to reduce the size of the testing program, so the testings for numerous edges cases aligned better with a clear view.
+
+While it can be seen that Gemini has the capability of producing general codes when the prompt is clear, it is also prone to missing some edges cases when getting into the details, especially when the context gets too long. I have to be aware of its pros and cons, and be cautious on checking AI-generated codes.
