@@ -32,9 +32,23 @@ No iOS changes were needed since `ASWebAuthenticationSession` manages the browse
 
 # Divya
 
-I used Google Stitch in order to design the layout and flow of the PDF upload process. Instead of keeping the single PDF upload page, I wanted to transform adding a class/syllabus into a multi-screen process. I wasn’t sure how to go about this, so I consulted Google Stitch to produce sample wireframes and UI components that matched our current design aesthetic. It was very helpful in quickly mixing our existing layout with my ideas for how to organize the class adding process, and I will continue to use this tool for planning prior to implementing features. Whenever I was given designs that didn’t illustrate my requirements, I would keep remixing the output with specific details about the features I wanted to change/add. 
+**Google Stitch**:
 
-I also used Claude to assist me in implementing certain frontend features. I found it very helpful, as I was able to find solutions quickly and better understand Swift. I needed to run and test the code after implementing a feature, as Claude occasionally made assumptions about available properties or methods. 
+I used Google Stitch to design the layout and flow of the PDF upload process. Instead of keeping the single PDF upload page, I wanted to transform adding a class/syllabus into a multi-screen process.
+
+* Consulted Google Stitch to produce sample wireframes and UI components that matched our current design aesthetic
+* Used the tool to quickly blend our existing layout with my ideas for organizing the class adding process
+* Whenever designs didn't meet my requirements, I iteratively kept remixing the output with specific details about features I wanted to change or add
+* Found this planning approach valuable, and I will continue using this tool for design planning prior to implementing features
+
+**Claude**:
+
+I also used Claude to assist me in implementing certain frontend features, which significantly accelerated my development process.
+
+* Helped me to find solutions quickly and better understand Swift syntax and patterns
+* Helped bridge knowledge gaps as I learned the framework
+* Required testing and validation —> I needed to run and test code after implementing each feature, as Claude occasionally made assumptions about available properties or methods
+* Developed a workflow of implementation followed by verification to ensure compatibility with our codebase
 
 # Yuhang
 
@@ -83,4 +97,5 @@ Google Stitch is a strong design accelerator for frontend work when paired with 
 # Divy
 
 I used Claude AI to help generate unit tests and documentation for this assignment. Specifically, I used it to familiarize myself with XCTest, the native iOS/Swift testing framework, as my prior testing experience was primarily with Jest. Claude helped me select the appropriate framework and generate tests for our event preview page. I verified the generated code by reviewing it for correctness and consistency, then running the tests to confirm they passed
+
 
