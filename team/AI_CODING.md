@@ -98,4 +98,11 @@ Google Stitch is a strong design accelerator for frontend work when paired with 
 
 I used Claude AI to help generate unit tests and documentation for this assignment. Specifically, I used it to familiarize myself with XCTest, the native iOS/Swift testing framework, as my prior testing experience was primarily with Jest. Claude helped me select the appropriate framework and generate tests for our event preview page. I verified the generated code by reviewing it for correctness and consistency, then running the tests to confirm they passed
 
+# Avaneesh
+
+I used ChatGPT to help implement the camera scanning feature in our app. I asked it for guidance on integrating camera capture and document scanning functionality and structuring the code to process scanned images before sending them to our backend. ChatGPT generated example code and explained how to process scanned images (by turning them into PDFs) and structure the feature so it fit cleanly within our existing architecture. ChatGPT was helpful for identifying the best modules to import for my objective. It provided a good starting point and reduced the time spent searching through documentation. 
+
+Because AI-generated code can be inaccurate or make assumptions about the project, I reviewed and tested everything before integrating it. ChatGPT did not mention that I needed to add the camera usage description to the app’s Info.plist, which caused the camera to fail at runtime until I diagnosed and fixed the issue. Afterwards, I ensured the camera lifecycle worked correctly, and modified the code to align with our app’s architecture. I also tested edge cases such as permission denial and scan cancellation to ensure stability. 
+
+AI is a useful aid to add basic features, but it should only be treated as guidance. Careful review and testing are essential to ensure correctness.
 
