@@ -79,3 +79,8 @@ This tool was very effective for **rapid UI ideation**. It significantly reduced
 ## Takeaway
 
 Google Stitch is a strong design accelerator for frontend work when paired with human judgment and manual implementation.
+
+# Divy
+
+I used Claude AI to help generate unit tests and documentation for this assignment. Specifically, I used it to familiarize myself with XCTest, the native iOS/Swift testing framework, as my prior testing experience was primarily with Jest. Claude helped me select the appropriate framework and generate tests for our event preview page. I verified the generated code by reviewing it for correctness and consistency, then running the tests to confirm they passed
+
