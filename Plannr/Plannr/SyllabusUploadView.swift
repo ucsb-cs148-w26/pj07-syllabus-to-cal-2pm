@@ -9,6 +9,7 @@ import SwiftUI
 import VisionKit
 import PDFKit
 import UIKit
+import PhotosUI
 
 struct SyllabusUploadView: View {
     @Environment(\.dismiss) var dismiss
@@ -21,6 +22,7 @@ struct SyllabusUploadView: View {
     @State private var showActionSheet = false
     @State private var showDocumentPicker = false
     @State private var showCameraScanner = false
+    @State private var showImagePicker = false
     
     @State private var pdfURL: URL?
     @State private var pdfFileName: String = "No file attached"
@@ -147,6 +149,10 @@ struct SyllabusUploadView: View {
                         uploadError = "Camera scanning is not supported on this device."
                     }
                 }
+
+                Button("Upload from Photos") {
+                    showImagePicker = true
+                }
                 
                 Button("Cancel", role: .cancel) {}
             }
@@ -165,6 +171,13 @@ struct SyllabusUploadView: View {
             }
             .sheet(isPresented: $showCameraScanner) {
                 DocumentScanner { images in
+                    convertImagesToPDFAndUpload(images: images)
+                }
+            }
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker { images in
+                    guard !images.isEmpty else { return }
+                    pdfFileName = "\(images.count) photo(s) selected"
                     convertImagesToPDFAndUpload(images: images)
                 }
             }
@@ -362,6 +375,66 @@ struct DocumentScanner: UIViewControllerRepresentable {
         ) {
             controller.dismiss(animated: true)
             print("Scan failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+//
+// MARK: - Image Picker (Photo Library)
+//
+struct ImagePicker: UIViewControllerRepresentable {
+    var onImagesPicked: ([UIImage]) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImagesPicked: onImagesPicked)
+    }
+
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        config.selectionLimit = 0 // 0 = unlimited selection
+
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(
+        _ uiViewController: PHPickerViewController,
+        context: Context
+    ) {}
+
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        var onImagesPicked: ([UIImage]) -> Void
+
+        init(onImagesPicked: @escaping ([UIImage]) -> Void) {
+            self.onImagesPicked = onImagesPicked
+        }
+
+        func picker(
+            _ picker: PHPickerViewController,
+            didFinishPicking results: [PHPickerResult]
+        ) {
+            picker.dismiss(animated: true)
+
+            var images: [UIImage] = []
+            let dispatchGroup = DispatchGroup()
+
+            for result in results {
+                if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
+                    dispatchGroup.enter()
+                    result.itemProvider.loadObject(ofClass: UIImage.self) { object, _ in
+                        if let image = object as? UIImage {
+                            images.append(image)
+                        }
+                        dispatchGroup.leave()
+                    }
+                }
+            }
+
+            dispatchGroup.notify(queue: .main) {
+                self.onImagesPicked(images)
+            }
         }
     }
 }
