@@ -3,6 +3,8 @@ from fastapi.responses import JSONResponse, RedirectResponse
 import google.generativeai as genai
 from PyPDF2 import PdfReader
 import os
+import time
+import secrets
 from io import BytesIO
 from dotenv import load_dotenv
 from google_auth_oauthlib.flow import Flow
@@ -47,6 +49,19 @@ SCOPES = [
     'openid'
 ]
 
+# In-memory OAuth state store: {state_token: created_timestamp}
+_oauth_states: dict[str, float] = {}
+OAUTH_STATE_TTL = 300  # 5 minutes
+
+
+def _cleanup_expired_states():
+    """Remove expired OAuth state tokens."""
+    now = time.time()
+    expired = [s for s, t in _oauth_states.items() if now - t > OAUTH_STATE_TTL]
+    for s in expired:
+        del _oauth_states[s]
+
+
 # Initialize database on startup
 init_db()
 
@@ -81,11 +96,17 @@ async def google_auth():
             content={"error": "Google OAuth credentials not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env"}
         )
 
+    _cleanup_expired_states()
+
+    state = secrets.token_urlsafe(32)
+    _oauth_states[state] = time.time()
+
     flow = get_oauth_flow()
-    authorization_url, state = flow.authorization_url(
+    authorization_url, _ = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true',
-        prompt='consent'
+        prompt='consent',
+        state=state
     )
     return RedirectResponse(url=authorization_url)
 
@@ -94,6 +115,17 @@ async def google_auth():
 async def auth_callback(code: str = Query(...), state: str = Query(None), redirect_to_app: bool = Query(True)):
     """Handle OAuth callback from Google"""
     try:
+        # Validate the OAuth state parameter to prevent CSRF attacks
+        from urllib.parse import quote as _quote
+        if not state or state not in _oauth_states:
+            error_url = f"plannr://auth/callback?error={_quote('Invalid or missing OAuth state. Please try signing in again.')}"
+            return RedirectResponse(url=error_url)
+
+        created_at = _oauth_states.pop(state)  # Single-use: delete immediately
+        if time.time() - created_at > OAUTH_STATE_TTL:
+            error_url = f"plannr://auth/callback?error={_quote('OAuth session expired. Please try signing in again.')}"
+            return RedirectResponse(url=error_url)
+
         flow = get_oauth_flow()
         flow.fetch_token(code=code)
 
