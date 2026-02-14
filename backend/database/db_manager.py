@@ -41,7 +41,7 @@ def init_db():
             print(f"Database Initialization Successful.")
 
     except sqlite3.Error as e:
-        raise Exception("Database Connection Error: {e}")
+        raise Exception(f"Database Connection Error: {e}")
 
 def fetch_user_creds(email):
     '''
@@ -72,7 +72,7 @@ def fetch_user_creds(email):
         return row[0]
     
     except sqlite3.Error as e:
-        raise Exception("Failed to fetch user {email} credentials: {e}")
+        raise Exception(f"Failed to fetch user {email} credentials: {e}")
 
 def add_user(email):
     '''
@@ -97,9 +97,9 @@ def add_user(email):
             print(f"New User Created: {email}")
     
     except sqlite3.IntegrityError as e:
-        raise Exception("User Already Exists: {e}")
+        raise Exception(f"User Already Exists: {e}")
     except sqlite3.Error as e:
-        raise Exception("Failed to add the user {email}: {e}")
+        raise Exception(f"Failed to add the user {email}: {e}")
 
 def remove_user(email):
     '''
@@ -121,10 +121,10 @@ def remove_user(email):
                 conn.commit()
                 print(f"User {email} removed.")
             else:
-                raise Exception("Failed to remove the user as user {email} does not exist.")
+                raise Exception(f"Failed to remove the user as user {email} does not exist.")
             
     except sqlite3.Error as e:
-        raise Exception("Failed to remove the user {email}: {e}")
+        raise Exception(f"Failed to remove the user {email}: {e}")
     
     
 
@@ -155,10 +155,10 @@ def update_creds(email, new_creds):
                 conn.commit()
                 print(f"Google Credentials updated for {email}.")
             else:
-                raise Exception("Failed to update user {email} credentials as the user does not exist.")
+                raise Exception(f"Failed to update user {email} credentials as the user does not exist.")
 
     except sqlite3.Error as e:
-        raise Exception("Failed to update user {email}'s credentials: {e}")
+        raise Exception(f"Failed to update user {email}'s credentials: {e}")
 
 
 def update_syllabi(email, new_syllabus_data):
@@ -188,10 +188,10 @@ def update_syllabi(email, new_syllabus_data):
                 conn.commit()
                 print(f"Syllabi updated for {email}.")
             else:
-                raise Exception("Failed to update user {email} credentials as the user does not exist.")
+                raise Exception(f"Failed to update user {email} credentials as the user does not exist.")
 
     except sqlite3.Error as e:
-        raise Exception("Failed to update user {email}'s syllabi: {e}")
+        raise Exception(f"Failed to update user {email}'s syllabi: {e}")
     
 def update_calendar(email, new_calendar):
     '''
@@ -214,16 +214,16 @@ def update_calendar(email, new_calendar):
                 new_data_json = json.dumps(new_calendar)
                 cursor.execute('''
                     update users 
-                    set syllabi = ? 
+                    set calendar = ? 
                     where email = ?
                 ''', (new_data_json, email))
                 conn.commit()
                 print(f"Calendar updated for {email}.")
             else:
-                raise Exception("Failed to update user {email} calendar as the user does not exist.")
+                raise Exception(f"Failed to update user {email} calendar as the user does not exist.")
 
     except sqlite3.Error as e:
-        raise Exception("Failed to update user {email}'s calendar: {e}")
+        raise Exception(f"Failed to update user {email}'s calendar: {e}")
 
 
 # --- Verification Block ---
