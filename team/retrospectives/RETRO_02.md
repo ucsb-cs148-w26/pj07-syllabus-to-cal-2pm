@@ -29,9 +29,12 @@
 ## Retro Assessment
 
 * Our team used the Start/Stop/Continue retro outline. Each team member took some time to create their own items. Then we came together to discuss all the start/stop/continue items. We selected a few high-importance items to focus on for our next sprint. 
-* Assesment: The retro went very well. We had very similar ideas for what to work on. 
+* Assessment: The retro went very well. We had very similar ideas for what to work on. 
 * Advice: I would tell a future leader to continue what we are doing: ensuring each member has an equal input into the outcome of the retro and work as a team to prioritize needs. 
 
 ## Experiment/Change
 
-To be done at the end of retro.
+
+* Description: For this sprint, we decided to focus on having cleaner testing processes and more efficient workflows.
+* Assessment: This experiment was a success. We did not have to wait until the very end to submit our work, and the work we did create and make PRs for were more efficiently tested with applicable acceptance criteria.
+* Decision Going Forward: The team will continue with this practice as it taught us proper practices.
