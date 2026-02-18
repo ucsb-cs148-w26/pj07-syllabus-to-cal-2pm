@@ -246,8 +246,8 @@ async def parse_with_gemini(syllabus_text: str) -> dict:
 
 Your primary objective is **correct due-date inference**, even when dates are implicit, relative, or described indirectly.
 
-Firstly, ensure the uploaded document is a syllabus for a university course. If it does not appear to be a syllabus, respond with an error message stating such in the JSON output.
-Make this output as a JSON object with an "error" field if it's not a syllabus, or an "events" field if it is. Do NOT attempt to extract events if the document is not a syllabus.
+Firstly, ensure the uploaded document is a syllabus for a university course. If it does not appear to be a syllabus, respond with an error message stating such in the JSON output. 
+If not a syllabus, make the "isSyllabus" field to FALSE. If it is a syllabus, this field should be TRUE. Do NOT attempt to extract events if the document is not a syllabus.
 ---
 
 ## Step 1: Academic Term & Year Inference (MANDATORY)
@@ -357,7 +357,8 @@ Return a **single JSON object** in this exact format:
                     "title": "event name",
                     "date": "YYYY-MM-DD",
                     "type": "homework/exam/quiz/lab/other",
-                    "description": "brief description"
+                    "description": "brief description",
+                    "isSyllabus": "True if syllabus false if not"
                 }}
             ]
         }}
