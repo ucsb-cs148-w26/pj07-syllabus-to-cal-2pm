@@ -21,6 +21,11 @@ struct CalendarPreviewView: View {
     @State private var syncMessage: String?
     @State private var syncSuccess: Bool?
     @State private var showSyncAlert = false
+    @State private var showExportOptions = false
+    @State private var isExporting = false
+    @State private var exportItem: ExportItem?
+    @State private var exportErrorMessage: String?
+    @State private var showExportError = false
     
     init(className: String, classSchedule: String, classColor: Color, events: [CalendarEvent]) {
         self.className = className
@@ -189,6 +194,100 @@ struct CalendarPreviewView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isSyncing)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showExportOptions = true
+                } label: {
+                    if isExporting {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundColor(.white)
+                    }
+                }
+                .disabled(isExporting || isSyncing)
+            }
+        }
+        .confirmationDialog("Export Events", isPresented: $showExportOptions, titleVisibility: .visible) {
+            Button("Export as .ics (Calendar)") { exportEvents(format: "ics") }
+            Button("Export as .csv (Spreadsheet)") { exportEvents(format: "csv") }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Choose a format to download your events.")
+        }
+        .sheet(item: $exportItem) { item in
+            ActivityViewController(activityItems: [item.url])
+        }
+        .alert("Export Failed", isPresented: $showExportError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(exportErrorMessage ?? "An unknown error occurred.")
+        }
+    }
+
+    func exportEvents(format: String) {
+        guard let email = UserDefaults.standard.string(forKey: "userEmail"),
+              let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(BACKEND_URL)/export?email=\(encodedEmail)&format=\(format)") else {
+            exportErrorMessage = "Could not determine your account email. Please sign in again."
+            showExportError = true
+            return
+        }
+
+        isExporting = true
+
+        struct ExportRequestBody: Encodable {
+            let events: [CalendarEvent]
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONEncoder().encode(ExportRequestBody(events: events))
+        } catch {
+            isExporting = false
+            exportErrorMessage = "Failed to encode events."
+            showExportError = true
+            return
+        }
+
+        Task {
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                await MainActor.run {
+                    isExporting = false
+                    if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                        let ext = format == "ics" ? "ics" : "csv"
+                        let tempURL = FileManager.default.temporaryDirectory
+                            .appendingPathComponent("events.\(ext)")
+                        do {
+                            try data.write(to: tempURL)
+                            exportItem = ExportItem(url: tempURL)
+                        } catch {
+                            exportErrorMessage = "Failed to save export file."
+                            showExportError = true
+                        }
+                    } else if let body = try? JSONDecoder().decode([String: String].self, from: data),
+                              let errorMsg = body["error"] {
+                        exportErrorMessage = errorMsg
+                        showExportError = true
+                    } else {
+                        exportErrorMessage = "Export failed. Please try again."
+                        showExportError = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isExporting = false
+                    exportErrorMessage = "Network error: \(error.localizedDescription)"
+                    showExportError = true
+                }
+            }
+        }
     }
 
     func syncToCalendar() {
@@ -801,6 +900,23 @@ struct DayCell: View {
         .cornerRadius(8)
         .onTapGesture { onTap() }
     }
+}
+
+// MARK: - Export Helpers
+
+struct ExportItem: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+struct ActivityViewController: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

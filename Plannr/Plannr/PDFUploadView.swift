@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let BACKEND_URL = "http://cs148.misc.iamjiamingliu.com:8000"
+let BACKEND_URL = "https://cs148.misc.iamjiamingliu.com/cs148api/"
 
 struct PDFUploadView: View {
     @StateObject private var classManager = ClassManager()

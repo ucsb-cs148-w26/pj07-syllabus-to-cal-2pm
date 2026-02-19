@@ -1,11 +1,15 @@
 from fastapi import FastAPI, File, UploadFile, Query, Body
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 import google.generativeai as genai
 from PyPDF2 import PdfReader
 import os
 import time
 import secrets
+import csv
+import io
 from io import BytesIO
+from datetime import date as date_type
+from icalendar import Calendar as ICalendar, Event as ICalEvent
 from dotenv import load_dotenv
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
@@ -464,3 +468,81 @@ async def add_to_calendar(email: str = Query(...), request: CalendarSyncRequest 
             status_code=400,
             content={"error": f"Failed to add events to calendar: {str(e)}"}
         )
+
+
+@app.post('/export', tags=['Export'])
+async def export_events(
+    email: str = Query(...),
+    format: str = Query(...),
+    request: CalendarSyncRequest = Body(...)
+):
+    """Export parsed syllabus events as a downloadable .ics or .csv file."""
+    if format.lower() not in ['ics', 'csv']:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "format must be 'ics' or 'csv'"}
+        )
+
+    creds_json = fetch_user_creds(email)
+    if not creds_json:
+        return JSONResponse(
+            status_code=401,
+            content={"error": "User not authenticated. Please sign in with Google first."}
+        )
+
+    if not request.events:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No events provided"}
+        )
+
+    try:
+        if format.lower() == 'ics':
+            return _build_ics_response(request.events)
+        else:
+            return _build_csv_response(request.events)
+    except Exception as e:
+        print(f"Export error: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Failed to export events: {str(e)}"}
+        )
+
+
+def _build_ics_response(events: List[CalendarEvent]) -> StreamingResponse:
+    """Build a valid RFC 5545 iCalendar response from the given events."""
+    cal = ICalendar()
+    cal.add('prodid', '-//Plannr//Syllabus Export//EN')
+    cal.add('version', '2.0')
+    for ev in events:
+        vevent = ICalEvent()
+        vevent.add('summary', ev.title)
+        vevent.add('dtstart', date_type.fromisoformat(ev.date))
+        vevent.add('dtend', date_type.fromisoformat(ev.date))
+        if ev.description:
+            vevent.add('description', ev.description)
+        if ev.type:
+            vevent.add('categories', [ev.type])
+        cal.add_component(vevent)
+    buf = io.BytesIO(cal.to_ical())
+    return StreamingResponse(
+        buf,
+        media_type='text/calendar',
+        headers={'Content-Disposition': 'attachment; filename="events.ics"'}
+    )
+
+
+def _build_csv_response(events: List[CalendarEvent]) -> StreamingResponse:
+    """Build a CSV response with columns: Title, Date, Type, Description."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Title', 'Date', 'Type', 'Description'])
+    for ev in events:
+        writer.writerow([ev.title, ev.date, ev.type or '', ev.description or ''])
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        media_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename="events.csv"'}
+    )
