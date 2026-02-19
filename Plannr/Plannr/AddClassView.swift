@@ -53,17 +53,6 @@ struct AddClassView: View {
                                 .cornerRadius(8)
                         }
                         
-                        // Color Picker
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Class Color")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            ColorPicker("", selection: $selectedColor)
-                                .labelsHidden()
-                                .padding()
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(8)
-                        }
                     }
                     .padding(.horizontal)
                     
