@@ -220,6 +220,7 @@ struct CalendarEvent: Codable, Identifiable {
     var description: String
     var colorHex: String = "007AFF"
     var status: EventStatus = .pending
+    var isSyllabus: Bool = true
 
     var color: Color {
         get { Color(hex: colorHex) }
@@ -227,7 +228,7 @@ struct CalendarEvent: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, date, type, description, colorHex, status
+        case id, title, date, type, description, colorHex, status, isSyllabus
     }
 
     init(title: String, date: String, type: String, description: String) {
@@ -247,6 +248,7 @@ struct CalendarEvent: Codable, Identifiable {
         description = try container.decode(String.self, forKey: .description)
         colorHex = try container.decodeIfPresent(String.self, forKey: .colorHex) ?? "007AFF"
         status = try container.decodeIfPresent(EventStatus.self, forKey: .status) ?? .pending
+        isSyllabus = try container.decodeIfPresent(Bool.self, forKey: .isSyllabus) ?? true
     }
 }
 
