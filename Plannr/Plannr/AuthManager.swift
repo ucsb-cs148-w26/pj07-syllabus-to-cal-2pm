@@ -15,7 +15,7 @@ class AuthManager: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
 
-    private let backendURL = "http://localhost:8000"
+    private let backendURL = "http://cs148.misc.iamjiamingliu.com:8000"
 
     init() {
         // Check if user is already authenticated (from UserDefaults)
