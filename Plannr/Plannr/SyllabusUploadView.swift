@@ -261,6 +261,12 @@ struct SyllabusUploadView: View {
                         )
                         
                         DispatchQueue.main.async {
+                            let notSyllabus = jsonResponse.events.contains { $0.isSyllabus == false }
+                            if jsonResponse.events.isEmpty || notSyllabus{
+                                self.uploadError = "No events were found. Please ensure you are uploading a valid course syllabus and try again."
+                                self.isUploading = false
+                                return
+                            }
                             self.parsedEvents = jsonResponse.events
                             self.isUploading = false
                             self.navigateToPreview = true
