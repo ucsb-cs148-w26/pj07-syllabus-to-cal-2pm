@@ -26,12 +26,14 @@ struct CalendarPreviewView: View {
     @State private var exportItem: ExportItem?
     @State private var exportErrorMessage: String?
     @State private var showExportError = false
+    @State private var sharedEventColor: Color
     
     init(className: String, classSchedule: String, classColor: Color, events: [CalendarEvent]) {
         self.className = className
         self.classSchedule = classSchedule
         self.classColor = classColor
         _events = State(initialValue: events)
+        _sharedEventColor = State(initialValue: classColor)
     }
 
     var body: some View {
@@ -57,7 +59,7 @@ struct CalendarPreviewView: View {
                         }
                         .padding(.horizontal)
 
-                        CalendarGridView(events: events)
+                        CalendarGridView(events: events, sharedEventColor: sharedEventColor)
                             .padding(.horizontal)
 
                         // Accept All / Decline All buttons
@@ -105,14 +107,23 @@ struct CalendarPreviewView: View {
                             .foregroundColor(.gray)
                             .padding(.horizontal)
 
+                        // Shared event color picker
+                        HStack {
+                            Text("Event Color")
+                                .font(.subheadline)
+                                .foregroundColor(.white)
+                            Spacer()
+                            ColorPicker("", selection: $sharedEventColor)
+                                .labelsHidden()
+                        }
+                        .padding(.horizontal)
+
                         // Events list
                         VStack(spacing: 12) {
                             ForEach(events.indices, id: \.self) { index in
                                 EventCard(
                                     event: events[index],
-                                    onColorChange: { newColor in
-                                        events[index].color = newColor
-                                    },
+                                    colorOverride: sharedEventColor,
                                     onEdit: {
                                         editingEvent = events[index]
                                     },
@@ -169,7 +180,7 @@ struct CalendarPreviewView: View {
                         let newClass = Class(
                             name: className,
                             schedule: classSchedule,
-                            colorHex: classColor.toHex(),
+                            colorHex: sharedEventColor.toHex(),
                             events: events.filter { $0.status == .accepted }
                         )
                         classManager.addClass(newClass)
@@ -315,25 +326,23 @@ struct CalendarPreviewView: View {
 // MARK: - Event Card
 struct EventCard: View {
     let event: CalendarEvent
-    @State private var selectedColor: Color
-    var onColorChange: ((Color) -> Void)?
+    var colorOverride: Color?
     var onEdit: (() -> Void)?
     var onAccept: (() -> Void)?
     var onDecline: (() -> Void)?
     
     init(
         event: CalendarEvent,
-        onColorChange: ((Color) -> Void)? = nil,
+        colorOverride: Color? = nil,
         onEdit: (() -> Void)? = nil,
         onAccept: (() -> Void)? = nil,
         onDecline: (() -> Void)? = nil
     ) {
         self.event = event
-        self.onColorChange = onColorChange
+        self.colorOverride = colorOverride
         self.onEdit = onEdit
         self.onAccept = onAccept
         self.onDecline = onDecline
-        _selectedColor = State(initialValue: event.color)
     }
     
     var body: some View {
@@ -358,20 +367,12 @@ struct EventCard: View {
                         .cornerRadius(8)
                 }
                 
-                // Color Picker Button
-                ColorPicker("", selection: $selectedColor)
-                    .labelsHidden()
-                    .frame(width: 30, height: 30)
-                    .onChange(of: selectedColor) { newColor in
-                        onColorChange?(newColor)
-                    }
-                
                 Text(event.type.capitalized)
                     .font(.caption)
                     .fontWeight(.medium)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(selectedColor)
+                    .background(colorOverride ?? event.color)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
@@ -473,7 +474,6 @@ struct EventCard: View {
 // MARK: - Event Edit View
 struct EventEditView: View {
     @State private var editedEvent: CalendarEvent
-    @State private var selectedColor: Color
     @State private var selectedDate: Date
     let onSave: (CalendarEvent) -> Void
     @Environment(\.dismiss) var dismiss
@@ -486,7 +486,6 @@ struct EventEditView: View {
 
     init(event: CalendarEvent, onSave: @escaping (CalendarEvent) -> Void) {
         _editedEvent = State(initialValue: event)
-        _selectedColor = State(initialValue: event.color)
         _selectedDate = State(initialValue: Self.dateFormatter.date(from: event.date) ?? Date())
         self.onSave = onSave
     }
@@ -550,22 +549,9 @@ struct EventEditView: View {
                                 .cornerRadius(8)
                         }
                         
-                        // Color picker
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Color")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            ColorPicker("Event Color", selection: $selectedColor)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(8)
-                        }
-                        
                         // Save button
                         Button(action: {
                             editedEvent.date = Self.dateFormatter.string(from: selectedDate)
-                            editedEvent.color = selectedColor
                             onSave(editedEvent)
                         }) {
                             Text("Save Changes")
@@ -598,6 +584,7 @@ struct EventEditView: View {
 // MARK: - Calendar Grid View
 struct CalendarGridView: View {
     let events: [CalendarEvent]
+    let sharedEventColor: Color
     @State private var isWeekly = true
     
     var body: some View {
@@ -620,9 +607,9 @@ struct CalendarGridView: View {
             }
             
             if isWeekly {
-                WeeklyCalendarView(events: events)
+                WeeklyCalendarView(events: events, sharedEventColor: sharedEventColor)
             } else {
-                MonthlyCalendarView(events: events)
+                MonthlyCalendarView(events: events, sharedEventColor: sharedEventColor)
             }
         }
     }
@@ -631,6 +618,7 @@ struct CalendarGridView: View {
 // MARK: - Weekly Calendar View
 struct WeeklyCalendarView: View {
     let events: [CalendarEvent]
+    let sharedEventColor: Color
     @State private var selectedDate: Date = Date()
     
     private let calendar = Calendar.current
@@ -670,7 +658,8 @@ struct WeeklyCalendarView: View {
                     DayColumn(
                         date: date,
                         events: eventsForDate(date),
-                        isSelected: calendar.isDate(date, inSameDayAs: selectedDate)
+                        isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
+                        sharedEventColor: sharedEventColor
                     ) {
                         selectedDate = date
                     }
@@ -680,7 +669,7 @@ struct WeeklyCalendarView: View {
             
             VStack(spacing: 12){
                 ForEach(eventsForDate(selectedDate), id: \.title){
-                    event in EventCard(event: event)
+                    event in EventCard(event: event, colorOverride: sharedEventColor)
                 }
             }
         }
@@ -719,6 +708,7 @@ struct DayColumn: View {
     let date: Date
     let events: [CalendarEvent]
     let isSelected: Bool
+    let sharedEventColor: Color
     let onTap: () -> Void
     
     private let calendar = Calendar.current
@@ -743,7 +733,7 @@ struct DayColumn: View {
                 HStack(spacing: 2) {
                     ForEach(events.prefix(3), id: \.title) { event in
                         Circle()
-                            .fill(event.color)
+                            .fill(sharedEventColor)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -770,6 +760,7 @@ struct DayColumn: View {
 // MARK: - Monthly Calendar View
 struct MonthlyCalendarView: View {
     let events: [CalendarEvent]
+    let sharedEventColor: Color
     @State private var selectedDate: Date = Date()
     
     private let calendar = Calendar.current
@@ -825,7 +816,8 @@ struct MonthlyCalendarView: View {
                     DayCell(
                         date: date,
                         events: eventsForDate(date),
-                        isSelected: calendar.isDate(date, inSameDayAs: selectedDate)
+                        isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
+                        sharedEventColor: sharedEventColor
                     ) {
                         selectedDate = date
                     }
@@ -835,7 +827,7 @@ struct MonthlyCalendarView: View {
             
             VStack(spacing: 12){
                 ForEach(eventsForDate(selectedDate), id: \.title){
-                    event in EventCard(event: event)
+                    event in EventCard(event: event, colorOverride: sharedEventColor)
                 }
             }
         }
@@ -878,6 +870,7 @@ struct DayCell: View {
     let date: Date
     let events: [CalendarEvent]
     let isSelected: Bool
+    let sharedEventColor: Color
     let onTap: () -> Void
     
     private let calendar = Calendar.current
@@ -890,7 +883,7 @@ struct DayCell: View {
             
             if !events.isEmpty {
                 Circle()
-                    .fill(events.first?.color ?? .gray)
+                    .fill(sharedEventColor)
                     .frame(width: 5, height: 5)
             }
         }

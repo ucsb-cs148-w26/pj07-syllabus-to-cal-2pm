@@ -4,8 +4,9 @@ import os
 import pathlib
 from dotenv import load_dotenv
 
-load_dotenv()
 current_dir = pathlib.Path(__file__).parent.resolve()
+env_path = current_dir.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 DB_NAME = current_dir / os.getenv("DB_FILEPATH", "SAMPLE.db")
 
 

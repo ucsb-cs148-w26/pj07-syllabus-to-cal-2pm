@@ -73,45 +73,6 @@ struct PDFUploadView: View {
                             }
                             .padding(.horizontal)
                             .padding(.top, 8)
-                            
-                            // Upload syllabus section (if no classes)
-//                            if classManager.classes.isEmpty {
-//                                VStack(spacing: 16) {
-//                                    ZStack {
-//                                        Circle()
-//                                            .fill(Color.blue.opacity(0.2))
-//                                            .frame(width: 100, height: 100)
-//                                        
-//                                        Image(systemName: "doc.text.fill")
-//                                            .font(.system(size: 40))
-//                                            .foregroundColor(.blue)
-//                                    }
-//                                    
-//                                    VStack(spacing: 8) {
-//                                        Text("Scan/Upload Syllabus to Start")
-//                                            .font(.title3)
-//                                            .fontWeight(.semibold)
-//                                            .foregroundColor(.white)
-//                                    }
-//                                    
-//                                    Text("We'll automatically extract deadlines, exam dates, and important events")
-//                                        .font(.caption)
-//                                        .foregroundColor(.gray)
-//                                        .multilineTextAlignment(.center)
-//                                        .padding(.horizontal, 32)
-//                                }
-//                                .padding(.vertical, 40)
-//                                .frame(maxWidth: .infinity)
-//                                .background(
-//                                    RoundedRectangle(cornerRadius: 20)
-//                                        .strokeBorder(
-//                                            style: StrokeStyle(lineWidth: 2, dash: [10, 5])
-//                                        )
-//                                        .foregroundColor(.blue)
-//                                )
-//                                .padding(.horizontal)
-//                                .padding(.top, 20)
-//                            }
                         }
                         .padding(.bottom, 40)
                     }
@@ -220,6 +181,7 @@ struct CalendarEvent: Codable, Identifiable {
     var description: String
     var colorHex: String = "007AFF"
     var status: EventStatus = .pending
+    var isSyllabus: Bool = true
 
     var color: Color {
         get { Color(hex: colorHex) }
@@ -227,7 +189,7 @@ struct CalendarEvent: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, date, type, description, colorHex, status
+        case id, title, date, type, description, colorHex, status, isSyllabus
     }
 
     init(title: String, date: String, type: String, description: String) {
@@ -247,6 +209,7 @@ struct CalendarEvent: Codable, Identifiable {
         description = try container.decode(String.self, forKey: .description)
         colorHex = try container.decodeIfPresent(String.self, forKey: .colorHex) ?? "007AFF"
         status = try container.decodeIfPresent(EventStatus.self, forKey: .status) ?? .pending
+        isSyllabus = try container.decodeIfPresent(Bool.self, forKey: .isSyllabus) ?? true
     }
 }
 

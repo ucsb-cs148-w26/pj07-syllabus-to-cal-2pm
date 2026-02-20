@@ -16,5 +16,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /home/bitnami/pj07-syllabus-to-cal-2pm
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
+            ./venv/bin/pip install -r backend/requirements.txt
             sudo systemctl restart plannr
