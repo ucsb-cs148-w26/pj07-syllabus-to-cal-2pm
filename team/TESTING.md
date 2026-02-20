@@ -161,5 +161,73 @@ pytest -v
 * **Red F/text**: Failing tests (includes a stack trace pointing to the assertion failure).
 
 
+---
 
+# Backend - Component / Integration Testing
 
+## Testing Library
+
+**pytest + FastAPI TestClient** (backed by `httpx`)
+
+FastAPI's `TestClient` sends real HTTP requests through the full application stack (routing, request parsing, validation, business logic, and response serialization) without requiring a live server. Only the database and external OAuth services are mocked with `unittest.mock.patch`. This makes it a component test: the HTTP endpoint is exercised end-to-end, but external I/O is controlled.
+
+## Component Tests Implemented
+
+### Test File: `test_oauth_state.py`
+
+Tests the OAuth CSRF state machine at the HTTP level.
+
+#### 1. **test_cleanup_removes_expired_states()**
+- Verifies that expired state tokens are purged and fresh ones are kept.
+
+#### 2. **test_missing_state_rejected() / test_invalid_state_rejected()**
+- Confirms that `/auth/callback` redirects with an error when the `state` parameter is absent or was never issued.
+
+#### 3. **test_expired_state_rejected()**
+- Confirms that states older than the TTL are rejected even if they exist in the store.
+
+#### 4. **test_state_is_single_use()**
+- Confirms that a valid state token cannot be replayed — the second request is rejected.
+
+#### 5. **test_google_auth_stores_state() / test_each_request_generates_unique_state()**
+- Confirms that each call to `/auth/google` stores a new unique state token and includes it in the redirect URL.
+
+---
+
+### Test File: `test_export.py`
+
+Tests the `/export` endpoint end-to-end.
+
+#### 1. **test_export_ics_valid()**
+- Authenticated POST with real events returns `text/calendar` with a valid iCalendar body containing `BEGIN:VEVENT` entries.
+
+#### 2. **test_export_csv_valid()**
+- Authenticated POST returns `text/csv` with correct column headers and event rows.
+
+#### 3. **test_export_invalid_format()**
+- Unsupported `format` parameter returns 400 with an error message referencing "format".
+
+#### 4. **test_export_unauthenticated()**
+- Email with no stored credentials returns 401 with "authenticated" in the error.
+
+#### 5. **test_export_empty_events()**
+- Authenticated POST with an empty events list returns 400 with "no events" in the error.
+
+## Running the Component Tests
+
+```bash
+cd backend
+pytest tests/test_oauth_state.py tests/test_export.py -v
+```
+
+---
+
+# Plans Going Forward
+
+## Unit Tests
+
+We will continue adding pytest unit tests for new backend modules as they are introduced (e.g. new DB functions, utility helpers). On the Swift side, XCTest will cover pure logic that does not require a running app — event filtering, status toggling, URL construction. We are not targeting 100% coverage given the scope of the project, but critical business logic (sync filtering, auth state) will remain covered.
+
+## Higher-Level / Component Tests
+
+We will continue using FastAPI's `TestClient` pattern for any new HTTP endpoints. Component tests give us the best return on investment: they are fast, require no live infrastructure, and catch integration bugs (routing, serialization, auth checks) that unit tests miss. We have no plans for full end-to-end UI tests (e.g. Appium, XCUITest automation) — the overhead of mobile UI test infrastructure is not justified at this stage, and the component + unit combination covers our backend thoroughly.
