@@ -23,9 +23,11 @@ struct SyllabusUploadView: View {
     @State private var showDocumentPicker = false
     @State private var showCameraScanner = false
     @State private var showImagePicker = false
+    @State private var showTextEntry = false
     
     @State private var pdfURL: URL?
     @State private var pdfFileName: String = "No file attached"
+    @State private var syllabusText: String = ""
     @State private var isUploading = false
     @State private var uploadError: String?
     @State private var parsedEvents: [CalendarEvent] = []
@@ -154,6 +156,10 @@ struct SyllabusUploadView: View {
                     showImagePicker = true
                 }
                 
+                Button("Enter Text Manually") {
+                    showTextEntry = true
+                }
+                
                 Button("Cancel", role: .cancel) {}
             }
             .sheet(isPresented: $showDocumentPicker) {
@@ -179,6 +185,11 @@ struct SyllabusUploadView: View {
                     guard !images.isEmpty else { return }
                     pdfFileName = "\(images.count) photo(s) selected"
                     convertImagesToPDFAndUpload(images: images)
+                }
+            }
+            .sheet(isPresented: $showTextEntry) {
+                TextEntryView(text: $syllabusText) { finalText in
+                    convertTextToPDFAndUpload(text: finalText)
                 }
             }
             .navigationDestination(isPresented: $navigateToPreview) {
@@ -215,6 +226,78 @@ struct SyllabusUploadView: View {
             uploadError = "Failed to create PDF from scan."
         }
     }
+    
+    func convertTextToPDFAndUpload(text: String) {
+        let pageWidth: CGFloat = 612
+        let pageHeight: CGFloat = 792
+        let margin: CGFloat = 40
+
+        let printableRect = CGRect(
+            x: margin,
+            y: margin,
+            width: pageWidth - 2 * margin,
+            height: pageHeight - 2 * margin
+        )
+
+        let renderer = UIGraphicsPDFRenderer(
+            bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
+        )
+
+        let data = renderer.pdfData { context in
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .left
+            paragraphStyle.lineBreakMode = .byWordWrapping
+
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 12),
+                .paragraphStyle: paragraphStyle
+            ]
+
+            let attributedText = NSAttributedString(string: text, attributes: attributes)
+
+            let framesetter = CTFramesetterCreateWithAttributedString(attributedText)
+
+            var currentRange = CFRange(location: 0, length: 0)
+            var done = false
+
+            while !done {
+                context.beginPage()
+
+                let path = CGMutablePath()
+                path.addRect(printableRect)
+
+                let frame = CTFramesetterCreateFrame(
+                    framesetter,
+                    currentRange,
+                    path,
+                    nil
+                )
+
+                CTFrameDraw(frame, context.cgContext)
+
+                let visibleRange = CTFrameGetVisibleStringRange(frame)
+
+                if visibleRange.location + visibleRange.length >= attributedText.length {
+                    done = true
+                } else {
+                    currentRange.location += visibleRange.length
+                }
+            }
+        }
+
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TypedSyllabus.pdf")
+
+        do {
+            try data.write(to: tempURL)
+            pdfURL = tempURL
+            pdfFileName = "TypedSyllabus.pdf"
+            uploadPDF(url: tempURL)
+        } catch {
+            uploadError = "Failed to create PDF from text."
+        }
+    }
+
     
     // MARK: - Upload PDF
     func uploadPDF(url: URL) {
@@ -444,6 +527,43 @@ struct ImagePicker: UIViewControllerRepresentable {
         }
     }
 }
+
+struct TextEntryView: View {
+    @Environment(\.dismiss) var dismiss
+    @Binding var text: String
+    var onDone: (String) -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack {
+                TextEditor(text: $text)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+                    .padding()
+
+                Spacer()
+            }
+            .navigationTitle("Paste Syllabus Text")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                        onDone(text)
+                    }
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 #Preview {
     NavigationStack {
