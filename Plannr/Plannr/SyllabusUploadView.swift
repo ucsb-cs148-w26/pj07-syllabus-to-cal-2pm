@@ -499,10 +499,34 @@ struct ImagePicker: UIViewControllerRepresentable {
         init(onImagesPicked: @escaping ([UIImage]) -> Void) {
             self.onImagesPicked = onImagesPicked
         }
+
+        func picker(
+            _ picker: PHPickerViewController,
+            didFinishPicking results: [PHPickerResult]
+        ) {
+            picker.dismiss(animated: true)
+
+            var images: [UIImage] = []
+            let dispatchGroup = DispatchGroup()
+
+            for result in results {
+                if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
+                    dispatchGroup.enter()
+                    result.itemProvider.loadObject(ofClass: UIImage.self) { object, _ in
+                        if let image = object as? UIImage {
+                            images.append(image)
+                        }
+                        dispatchGroup.leave()
                     }
                 }
             }
 
+            dispatchGroup.notify(queue: .main) {
+                self.onImagesPicked(images)
+            }
+        }
+    }
+}
 
 struct TextEntryView: View {
     @Environment(\.dismiss) var dismiss
@@ -539,31 +563,7 @@ struct TextEntryView: View {
         }
     }
 }
-            didFinishPicking results: [PHPickerResult]
-        ) {
-            picker.dismiss(animated: true)
 
-            var images: [UIImage] = []
-            let dispatchGroup = DispatchGroup()
-
-            for result in results {
-                if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
-                    dispatchGroup.enter()
-                    result.itemProvider.loadObject(ofClass: UIImage.self) { object, _ in
-                        if let image = object as? UIImage {
-                            images.append(image)
-                        }
-                        dispatchGroup.leave()
-                    }
-                }
-            }
-
-            dispatchGroup.notify(queue: .main) {
-                self.onImagesPicked(images)
-            }
-        }
-    }
-}
 
 #Preview {
     NavigationStack {
