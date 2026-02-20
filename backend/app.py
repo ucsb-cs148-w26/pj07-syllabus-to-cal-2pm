@@ -337,6 +337,11 @@ Ignore:
 - Do NOT invent names or normalize aggressively
 - If an assignment has multiple graded submissions (draft/final, submission/regrade):
   - Create **separate events** with clear titles
+- Be sure to take note of what the name of the course is that the student is taking ot output. Typically, this will be in the title, header, footer, etc. 
+If none is found just put unknown DO not put error in that field. If available call the course by it's known name, such as CS101 as opposed to Computer Science Basics. 
+Course codes over long wordy stuff.
+
+
 
 ---
 
@@ -358,6 +363,7 @@ Return a **single JSON object** in this exact format:
                     "date": "YYYY-MM-DD",
                     "type": "homework/exam/quiz/lab/other",
                     "description": "brief description",
+                    "Class": "The name of the class the user is taking here",
                     "isSyllabus": "True if syllabus false if not"
                 }}
             ]
