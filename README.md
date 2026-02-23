@@ -93,7 +93,23 @@ System administrators responsible for maintaining app health, monitoring usage, 
 - Admins **do not** view full syllabus contents unless explicitly required for debugging
 
 ## Deployment
-Since we are building an iOS app, we use the simulator on Xcode to test/view our app's functionality.
+
+### iOS App
+The iOS app is run on a simulator or physical device via Xcode.
+
+### Backend
+The backend is deployed to a remote Bitnami server and is accessible at:
+
+```
+https://cs148.misc.iamjiamingliu.com/cs148api/
+```
+
+Deployment is automated via **GitHub Actions** (see [`.github/workflows/CD.yaml`](.github/workflows/CD.yaml)). On every push to `main`, the workflow SSHs into the server, pulls the latest code, installs dependencies, and restarts the `plannr` systemd service.
+
+The following repository secrets/variables must be configured in GitHub for the CD pipeline to work:
+- `vars.SSH_HOST` — hostname of the remote server
+- `vars.SSH_USERNAME` — SSH username
+- `secrets.SSH_KEY` — SSH private key
 
 # Installation
 
@@ -122,10 +138,11 @@ The iOS app uses only native Apple frameworks (no third-party dependencies):
 - **google-generativeai** — Google Gemini AI SDK for syllabus parsing
 - **PyPDF2** — PDF text extraction
 - **python-dotenv** — environment variable management
-- **google-auth / google-auth-oauthlib** — Google OAuth 2.0 authentication
+- **google-auth / google-auth-oauthlib / google-auth-httplib2** — Google OAuth 2.0 authentication
 - **google-api-python-client** — Google Calendar API client
 - **python-multipart** — multipart form-data parsing for file uploads
 - **pydantic** — request/response data validation
+- **icalendar** — iCalendar (.ics) file generation for the calendar export feature
 
 ## Installation Steps
 
@@ -151,7 +168,7 @@ The iOS app uses only native Apple frameworks (no third-party dependencies):
    - `GEMINI_API_KEY` — your Google Gemini API key
    - `GOOGLE_CLIENT_ID` — your Google OAuth client ID
    - `GOOGLE_CLIENT_SECRET` — your Google OAuth client secret
-   - `GOOGLE_REDIRECT_URI` — defaults to `http://localhost:8000/auth/callback`
+   - `GOOGLE_REDIRECT_URI` — set to `https://cs148.misc.iamjiamingliu.com/cs148api/auth/callback` for the deployed backend, or `http://localhost:8000/auth/callback` for local development
 
 4. **Start the backend server:**
    ```bash
@@ -174,7 +191,7 @@ The iOS app uses only native Apple frameworks (no third-party dependencies):
 
 # Known Problems
 
-- The backend URL is currently hardcoded to `http://localhost:8000` in `PDFUploadView.swift`, so the iOS app only works when the backend is running locally on the same machine as the simulator.
+- The backend URL is hardcoded to `https://cs148.misc.iamjiamingliu.com/cs148api/` in `PDFUploadView.swift` and `AuthManager.swift`. To run the backend locally, these values must be updated to `http://localhost:8000`.
 - OAuth redirect requires the iOS simulator or a device that can handle the `plannr://` custom URL scheme.
 
 # Contributing
