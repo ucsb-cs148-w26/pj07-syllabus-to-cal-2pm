@@ -1,5 +1,27 @@
 # User Feedback Needs
 
+### Core Metric: Syllabus Parsing Success Rate
+
+**Definition:**  
+% of syllabus uploads that result in a usable, correctly parsed schedule with no major missing or incorrect items.
+
+**Why this represents user value:**  
+Our core value proposition is converting syllabi into actionable schedules. If parsing fails or produces incorrect output, the product fails to deliver user value.
+
+**How to test during demo:**  
+1. Upload a syllabus file.  
+2. Display the auto-generated schedule.  
+3. Ask the tester:  
+   “Does this schedule correctly reflect your syllabus with no major missing or incorrect items?” (Yes / No)
+
+**What to record:**  
+- Successful parse (Yes/No)  
+- Number of missing or incorrect items (if applicable)
+
+**Success criteria:**  
+- Long-term success: ≥ 90% successful parses  
+- Target for 2/26 demo: ≥ 60–70% successful parses
+
 ## 1. AI Parsing Accuracy Satisfaction (Highest Priority)
 
 **What we want to know:** How satisfied are users with the accuracy of events extracted from their syllabi by our AI (Gemini)?

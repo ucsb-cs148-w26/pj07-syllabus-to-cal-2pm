@@ -172,6 +172,7 @@ The iOS app uses only native Apple frameworks (no third-party dependencies):
 
 4. **Start the backend server:**
    ```bash
+   cd backend
    uvicorn app:app --host 0.0.0.0 --port 8000 --reload
    ```
 
