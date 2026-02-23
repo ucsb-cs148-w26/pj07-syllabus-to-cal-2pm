@@ -146,42 +146,97 @@ The iOS app uses only native Apple frameworks (no third-party dependencies):
 
 ## Installation Steps
 
+Choose one of the following methods to run the app.
+
+### Option A: Using the Live Server (Recommended for Users)
+
+Use this method if you want to run the iOS app immediately without configuring a local backend environment.
+
 1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm.git
-   cd pj07-syllabus-to-cal-2pm
-   ```
+```bash
+git clone https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm.git
+cd pj07-syllabus-to-cal-2pm
+
+```
+
+
+2. **Open the iOS project in Xcode:**
+```bash
+open Plannr/Plannr.xcodeproj
+
+```
+
+
+3. **Run the iOS app:**
+Select a simulator or device target in Xcode and press `Cmd+R`.
+
+---
+
+### Option B: Local Development (Full Setup)
+
+Use this method if you are developing backend features or need to debug server-side code locally.
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm.git
+cd pj07-syllabus-to-cal-2pm
+
+```
+
 
 2. **Set up the backend:**
-   ```bash
-   cd backend
-   python3 -m venv venv
-   source venv/bin/activate   # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate    # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+```
+
 
 3. **Configure environment variables:**
-   ```bash
-   cp .env.SAMPLE .env
-   ```
-   Then edit `backend/.env` and fill in your credentials:
-   - `GEMINI_API_KEY` — your Google Gemini API key
-   - `GOOGLE_CLIENT_ID` — your Google OAuth client ID
-   - `GOOGLE_CLIENT_SECRET` — your Google OAuth client secret
-   - `GOOGLE_REDIRECT_URI` — set to `https://cs148.misc.iamjiamingliu.com/cs148api/auth/callback` for the deployed backend, or `http://localhost:8000/auth/callback` for local development
+```bash
+cp .env.SAMPLE .env
+
+```
+
+
+Edit `backend/.env` and fill in your credentials:
+* `GEMINI_API_KEY`: Your Google Gemini API key
+* `GOOGLE_CLIENT_ID`: Your Google OAuth client ID
+* `GOOGLE_CLIENT_SECRET`: Your Google OAuth client secret
+* `GOOGLE_REDIRECT_URI`: Set to `http://localhost:8000/auth/callback`
+
 
 4. **Start the backend server:**
-   ```bash
-   cd backend
-   uvicorn app:app --host 0.0.0.0 --port 8000 --reload
-   ```
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
-5. **Open the iOS project in Xcode:**
-   ```bash
-   open Plannr/Plannr.xcodeproj
-   ```
+```
 
-6. **Run the iOS app** on a simulator or device from Xcode (select a target and press Cmd+R).
+
+5. **Point the frontend to localhost:**
+You must update the backend URL in **two** files to point to your local server instead of the live production server.
+
+**File 1**: `Plannr/Plannr/AuthManager.swift`
+Find the `backendURL` variable and change it to localhost:
+```swift
+// Change from the production URL to:
+private let backendURL = "http://localhost:8000"
+
+```
+
+
+**File 2**: `Plannr/Plannr/PDFUploadView.swift`
+Find the `BACKEND_URL` constant and change it to localhost:
+```swift
+// Change from the production URL to:
+let BACKEND_URL = "http://localhost:8000"
+
+```
+6. **Run the iOS app:**
+Open `Plannr/Plannr.xcodeproj` and press `Cmd+R`.
+
 
 # Functionality
 
