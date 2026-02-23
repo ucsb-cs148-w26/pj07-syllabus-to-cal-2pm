@@ -303,22 +303,69 @@ struct CalendarPreviewView: View {
 
     func syncToCalendar() {
         let acceptedEvents = events.filter { $0.status == .accepted }
-        
+
         if acceptedEvents.isEmpty {
             syncMessage = "No accepted events to sync. Please accept events before syncing."
             syncSuccess = false
             showSyncAlert = true
             return
         }
-        
+
+        guard let email = UserDefaults.standard.string(forKey: "userEmail"),
+              let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(BACKEND_URL)/calendar?email=\(encodedEmail)") else {
+            syncMessage = "Could not determine your account email. Please sign in again."
+            syncSuccess = false
+            showSyncAlert = true
+            return
+        }
+
         isSyncing = true
-        
-        // Simulate a short delay for sync
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            self.syncMessage = "Successfully added \(acceptedEvents.count) events to your calendar!"
-            self.syncSuccess = true
-            self.isSyncing = false
-            self.showSyncAlert = true
+
+        struct SyncRequestBody: Encodable {
+            let events: [CalendarEvent]
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONEncoder().encode(SyncRequestBody(events: acceptedEvents))
+        } catch {
+            isSyncing = false
+            syncMessage = "Failed to encode events."
+            syncSuccess = false
+            showSyncAlert = true
+            return
+        }
+
+        Task {
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                await MainActor.run {
+                    isSyncing = false
+                    if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                        syncMessage = "Successfully added \(acceptedEvents.count) events to your calendar!"
+                        syncSuccess = true
+                    } else if let body = try? JSONDecoder().decode([String: String].self, from: data),
+                              let errorMsg = body["error"] ?? body["detail"] {
+                        syncMessage = errorMsg
+                        syncSuccess = false
+                    } else {
+                        syncMessage = "Sync failed. Please try again."
+                        syncSuccess = false
+                    }
+                    showSyncAlert = true
+                }
+            } catch {
+                await MainActor.run {
+                    isSyncing = false
+                    syncMessage = "Network error: \(error.localizedDescription)"
+                    syncSuccess = false
+                    showSyncAlert = true
+                }
+            }
         }
     }
 }
