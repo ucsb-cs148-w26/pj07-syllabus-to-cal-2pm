@@ -39,9 +39,9 @@
 │   iOS Frontend  │◄──►│  Python Backend  │◄──►│ External APIs   │
 │    (Swift UI)   │    │   (FastAPI)      │    │                 │
 └─────────────────┘    └──────────────────┘    │ • Google OAuth  │
-                                ▲               │ • Calendar API  │
-                                │               │ • Gemini AI     │
-                                ▼               └─────────────────┘
+                                ▲              │ • Calendar API  │
+                                │              │ • Gemini AI     │
+                                ▼              └─────────────────┘
                        ┌──────────────────┐
                        │ SQLite Database  │
                        │                  │
@@ -142,7 +142,7 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL PRIMARY KEY,
     google_credentials TEXT,  -- JSON-stored OAuth tokens
     calendar TEXT,            -- JSON-stored calendar preferences
-    syllabi TEXT             -- JSON-stored syllabus history
+    syllabi TEXT              -- JSON-stored syllabus history
 );
 ```
 
