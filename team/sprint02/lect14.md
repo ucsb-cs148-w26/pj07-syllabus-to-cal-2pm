@@ -25,9 +25,12 @@ Right now it looks very bland and very minimal, make it look actually engaging.
 1. Keep the vibe from the landing page, dark blue bg and wave on bottom w yellow accents
 2. fix ui on text upload please
 3. get rid of all black stuff
+4. On accepting classes page, get rid of accept / reject, reject on swipe edit on click, change share icon to export as ics/csv., get rid of colors
+5. make user pick color on new class creation
    
 ### Fix bugs 
 We have a few issues like redirecting and others.
+also fix prompt to be right 
 
 ### Add some stuff 
 1. Main page once classes are added should be this week's view.
