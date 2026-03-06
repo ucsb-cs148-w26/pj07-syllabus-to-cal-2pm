@@ -1,7 +1,7 @@
 # Date of Retrospective: 03/06/26
 
 * Led by: Jiaming Liu
-* Present: Arya Sadeghi, Yuhang Jiang, Divyani Punj, Matt Blanke (via zoom), Jiaming Liu, Divya Subramonian, Avaneesh Vinoth Kannan
+* Present: Arya Sadeghi (via zoom), Yuhang Jiang, Divyani Punj, Matt Blanke, Jiaming Liu, Divya Subramonian, Avaneesh Vinoth Kannan
 * Absent: None
 
 ## Action item
@@ -27,6 +27,7 @@ Goal: Improve PR review discipline
 Change: Stop merging pull requests without sufficient checks and ensure PRs include comments and proper review.
 
 Measurement: PR discussions will include feedback and code review comments before merging.
+
 
 ---
 
