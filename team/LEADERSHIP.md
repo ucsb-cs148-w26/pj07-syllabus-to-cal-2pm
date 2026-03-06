@@ -7,7 +7,8 @@
 | 1.21.26   | Matt Blanke       | Led group discussion of MVP                                        | 
 | 1.23.26   | Avaneesh V.K.     | Led group discussion in Retro #01                                  | 
 | 2.09.26   | Divya Subramonian | Led group dicsussion of planning sprint02 and feature developments |
-| 2.13.26   | Divya Subramonian | Led group discussion in Retro #02                                  | 
+| 3.06.26   | Divya Subramonian | Led group discussion in Retro #02                                  | 
+| 2.13.26   | Jiaming Liu       | Led group discussion in Retro #03                                  | 
 
 
 
