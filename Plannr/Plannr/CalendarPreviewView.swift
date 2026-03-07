@@ -10,6 +10,7 @@ import SwiftUI
 struct CalendarPreviewView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var classManager: ClassManager
+    @EnvironmentObject var authManager: AuthManager
     
     let className: String
     let classSchedule: String
@@ -87,27 +88,44 @@ struct CalendarPreviewView: View {
                 }
 
                 // Sticky Sync button
-                Button(action: {
-                    syncToCalendar()
-                }) {
+                if authManager.isGuest {
                     HStack(spacing: 8) {
-                        if isSyncing {
-                            ProgressView()
-                                .tint(.white)
-                        }
-                        Text(isSyncing ? "Adding..." : "Add to Google Calendar")
+                        Image(systemName: "lock.fill")
+                            .font(.subheadline)
+                        Text("Sign in to sync to Google Calendar")
                             .font(.headline)
-                            .foregroundColor(.white)
                     }
+                    .foregroundColor(.white.opacity(0.5))
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(isSyncing ? Color.gray : Color.blue)
+                    .background(Color.gray.opacity(0.3))
                     .cornerRadius(12)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color.black)
+                } else {
+                    Button(action: {
+                        syncToCalendar()
+                    }) {
+                        HStack(spacing: 8) {
+                            if isSyncing {
+                                ProgressView()
+                                    .tint(.white)
+                            }
+                            Text(isSyncing ? "Syncing..." : "Sync!")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isSyncing ? Color.gray : Color.blue)
+                        .cornerRadius(12)
+                    }
+                    .disabled(isSyncing)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color.black)
                 }
-                .disabled(isSyncing)
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                .background(Color.black)
             }
             .sheet(item: $editingEvent) { event in
                 EventEditView(event: event) { updatedEvent in
@@ -183,10 +201,10 @@ struct CalendarPreviewView: View {
     }
 
     func exportEvents(format: String) {
-        guard let email = UserDefaults.standard.string(forKey: "userEmail"),
-              let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+        let email = UserDefaults.standard.string(forKey: "userEmail") ?? "guest@plannr.local"
+        guard let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "\(BACKEND_URL)/export?email=\(encodedEmail)&format=\(format)") else {
-            exportErrorMessage = "Could not determine your account email. Please sign in again."
+            exportErrorMessage = "Could not build export URL."
             showExportError = true
             return
         }
@@ -915,5 +933,6 @@ struct ActivityViewController: UIViewControllerRepresentable {
             ]
         )
         .environmentObject(ClassManager())
+        .environmentObject(AuthManager())
     }
 }

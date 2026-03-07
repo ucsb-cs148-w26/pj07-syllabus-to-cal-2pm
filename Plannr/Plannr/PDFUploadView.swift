@@ -10,24 +10,45 @@ import SwiftUI
 let BACKEND_URL = "https://cs148.misc.iamjiamingliu.com/cs148api/"
 
 struct PDFUploadView: View {
-    @StateObject private var classManager = ClassManager()
+    @StateObject private var classManager: ClassManager
+    @EnvironmentObject var authManager: AuthManager
     @State private var showAddClass = false
-    
+
+    init(isGuest: Bool = false) {
+        _classManager = StateObject(wrappedValue: ClassManager(isGuest: isGuest))
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black.ignoresSafeArea()
-                
+
                 VStack(spacing: 0) {
+                    // Guest mode banner
+                    if authManager.isGuest {
+                        HStack(spacing: 8) {
+                            Image(systemName: "person.slash.fill")
+                                .font(.caption)
+                            Text("Guest Mode - data won't be saved between sessions")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(Color(red: 1, green: 0.72, blue: 0.11))
+                    }
+
                     // Header
                     HStack {
                         Text("My Classes")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
-                        
+
                         Spacer()
-                        
+
                         // User profile button (for when profiles are implemented)
                         Button {
                         } label: {
@@ -35,9 +56,15 @@ struct PDFUploadView: View {
                                 Circle()
                                     .fill(Color.yellow.opacity(0.3))
                                     .frame(width: 44, height: 44)
-                                
-                                Image(systemName: "person.fill")
-                                    .foregroundColor(.yellow)
+
+                                if authManager.isGuest {
+                                    Text("G")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.yellow)
+                                } else {
+                                    Image(systemName: "person.fill")
+                                        .foregroundColor(.yellow)
+                                }
                             }
                         }
                     }
