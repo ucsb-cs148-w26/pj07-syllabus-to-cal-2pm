@@ -28,11 +28,25 @@ struct UnifiedEvent: Identifiable {
 struct UnifiedCalendarView: View {
     @EnvironmentObject var classManager: ClassManager
     @State private var isWeekly = true
+    @State private var selectedEvent: UnifiedEvent?
+
+    private let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 
     var allEvents: [UnifiedEvent] {
         classManager.classes.flatMap { cls in
             cls.events.map { UnifiedEvent(event: $0, classColor: cls.color, className: cls.name) }
         }
+    }
+
+    var upcomingEvents: [UnifiedEvent] {
+        let todayString = dateFormatter.string(from: Date())
+        return allEvents
+            .filter { $0.event.date >= todayString }
+            .sorted { $0.event.date < $1.event.date }
     }
 
     var body: some View {
@@ -74,34 +88,153 @@ struct UnifiedCalendarView: View {
                     }
 
                     if isWeekly {
-                        UnifiedWeeklyCalendarView(events: allEvents)
+                        UnifiedWeeklyCalendarView(events: allEvents) { selectedEvent = $0 }
                     } else {
-                        UnifiedMonthlyCalendarView(events: allEvents)
+                        UnifiedMonthlyCalendarView(events: allEvents) { selectedEvent = $0 }
                     }
                 }
                 .padding(.horizontal)
 
-                // Empty state
-                if allEvents.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "calendar.badge.exclamationmark")
-                            .font(.system(size: 48))
-                            .foregroundColor(.gray)
-                        Text("No events yet")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                        Text("Upload syllabi to your classes to see all events here.")
-                            .font(.caption)
-                            .foregroundColor(.gray.opacity(0.7))
-                            .multilineTextAlignment(.center)
+                // Upcoming Events list
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Upcoming Events")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal)
+
+                    if upcomingEvents.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "calendar.badge.exclamationmark")
+                                .font(.system(size: 48))
+                                .foregroundColor(.gray)
+                            Text("No upcoming events")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                            Text("Upload syllabi to your classes to see events here.")
+                                .font(.caption)
+                                .foregroundColor(.gray.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 20)
+                    } else {
+                        ForEach(upcomingEvents) { unifiedEvent in
+                            UnifiedEventCard(unifiedEvent: unifiedEvent) {
+                                selectedEvent = unifiedEvent
+                            }
                             .padding(.horizontal)
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
                 }
+                .padding(.bottom, 40)
             }
             .padding(.top)
-            .padding(.bottom, 40)
+        }
+        .sheet(item: $selectedEvent) { event in
+            EventDetailSheet(unifiedEvent: event)
+        }
+    }
+}
+
+// MARK: - Event Detail Sheet
+
+struct EventDetailSheet: View {
+    let unifiedEvent: UnifiedEvent
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Title block
+                        HStack(spacing: 14) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(unifiedEvent.classColor)
+                                .frame(width: 5, height: 64)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(unifiedEvent.event.title)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                Text(unifiedEvent.className)
+                                    .font(.subheadline)
+                                    .foregroundColor(unifiedEvent.classColor)
+                            }
+                        }
+
+                        Divider().background(Color.gray.opacity(0.3))
+
+                        // Details
+                        DetailRow(icon: "calendar", label: "Date", value: formattedDate)
+                        DetailRow(
+                            icon: "tag",
+                            label: "Type",
+                            value: unifiedEvent.event.type.capitalized,
+                            valueColor: unifiedEvent.classColor
+                        )
+
+                        if !unifiedEvent.event.description.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Description")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.gray)
+                                Text(unifiedEvent.event.description)
+                                    .font(.body)
+                                    .foregroundColor(.white)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .padding()
+                }
+            }
+            .navigationTitle("Event Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(.white)
+                }
+            }
+        }
+    }
+
+    var formattedDate: String {
+        let parser = DateFormatter()
+        parser.dateFormat = "yyyy-MM-dd"
+        let display = DateFormatter()
+        display.dateFormat = "EEEE, MMMM d, yyyy"
+        if let date = parser.date(from: unifiedEvent.event.date) {
+            return display.string(from: date)
+        }
+        return unifiedEvent.event.date
+    }
+}
+
+struct DetailRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    var valueColor: Color = .white
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .foregroundColor(.gray)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Text(value)
+                    .font(.body)
+                    .foregroundColor(valueColor)
+            }
         }
     }
 }
@@ -110,6 +243,7 @@ struct UnifiedCalendarView: View {
 
 struct UnifiedWeeklyCalendarView: View {
     let events: [UnifiedEvent]
+    let onTapEvent: (UnifiedEvent) -> Void
     @State private var selectedDate: Date = Date()
 
     private let calendar = Calendar.current
@@ -150,7 +284,9 @@ struct UnifiedWeeklyCalendarView: View {
 
             VStack(spacing: 12) {
                 ForEach(eventsForDate(selectedDate)) { unifiedEvent in
-                    UnifiedEventCard(unifiedEvent: unifiedEvent)
+                    UnifiedEventCard(unifiedEvent: unifiedEvent) {
+                        onTapEvent(unifiedEvent)
+                    }
                 }
             }
             .padding(.horizontal, 8)
@@ -190,6 +326,7 @@ struct UnifiedWeeklyCalendarView: View {
 
 struct UnifiedMonthlyCalendarView: View {
     let events: [UnifiedEvent]
+    let onTapEvent: (UnifiedEvent) -> Void
     @State private var selectedDate: Date = Date()
 
     private let calendar = Calendar.current
@@ -244,7 +381,9 @@ struct UnifiedMonthlyCalendarView: View {
 
             VStack(spacing: 12) {
                 ForEach(eventsForDate(selectedDate)) { unifiedEvent in
-                    UnifiedEventCard(unifiedEvent: unifiedEvent)
+                    UnifiedEventCard(unifiedEvent: unifiedEvent) {
+                        onTapEvent(unifiedEvent)
+                    }
                 }
             }
             .padding(.horizontal, 8)
@@ -373,55 +512,74 @@ struct UnifiedDayCell: View {
 
 struct UnifiedEventCard: View {
     let unifiedEvent: UnifiedEvent
+    let onTap: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(unifiedEvent.classColor)
-                    .frame(width: 3, height: 40)
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 10) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(unifiedEvent.classColor)
+                        .frame(width: 3, height: 40)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(unifiedEvent.event.title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text(unifiedEvent.className)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(unifiedEvent.event.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        Text(unifiedEvent.className)
+                            .font(.caption)
+                            .foregroundColor(unifiedEvent.classColor)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(unifiedEvent.classColor)
+                        .foregroundColor(.gray)
+
+                    Text(unifiedEvent.event.type.capitalized)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(unifiedEvent.classColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
                 }
 
-                Spacer()
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Text(formattedDate(unifiedEvent.event.date))
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                }
 
-                Text(unifiedEvent.event.type.capitalized)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(unifiedEvent.classColor)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                if !unifiedEvent.event.description.isEmpty {
+                    Text(unifiedEvent.event.description)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .lineLimit(2)
+                }
             }
-
-            HStack(spacing: 6) {
-                Image(systemName: "calendar")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                Text(unifiedEvent.event.date)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-            }
-
-            if !unifiedEvent.event.description.isEmpty {
-                Text(unifiedEvent.event.description)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .lineLimit(2)
-            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.gray.opacity(0.15))
+            .cornerRadius(12)
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.gray.opacity(0.15))
-        .cornerRadius(12)
+        .buttonStyle(.plain)
+    }
+
+    func formattedDate(_ raw: String) -> String {
+        let parser = DateFormatter()
+        parser.dateFormat = "yyyy-MM-dd"
+        let display = DateFormatter()
+        display.dateFormat = "MMM d, yyyy"
+        if let date = parser.date(from: raw) {
+            return display.string(from: date)
+        }
+        return raw
     }
 }
 
