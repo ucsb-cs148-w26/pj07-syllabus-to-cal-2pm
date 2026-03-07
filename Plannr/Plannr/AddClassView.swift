@@ -10,7 +10,9 @@ import SwiftUI
 struct AddClassView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var classManager: ClassManager
-    
+
+    var onSyncComplete: (() -> Void)? = nil
+
     @State private var className: String = ""
     @State private var classSchedule: String = ""
     @State private var selectedColor: Color = .blue
@@ -88,7 +90,8 @@ struct AddClassView: View {
                 SyllabusUploadView(
                     className: className,
                     classSchedule: classSchedule,
-                    classColor: selectedColor
+                    classColor: selectedColor,
+                    onSyncComplete: onSyncComplete
                 )
                 .environmentObject(classManager)
             }

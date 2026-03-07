@@ -106,7 +106,7 @@ struct PDFUploadView: View {
                 }
             }
             .sheet(isPresented: $showAddClass) {
-                AddClassView()
+                AddClassView(onSyncComplete: { showAddClass = false })
                     .environmentObject(classManager)
             }
         }

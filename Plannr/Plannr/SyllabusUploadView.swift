@@ -14,10 +14,11 @@ import PhotosUI
 struct SyllabusUploadView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var classManager: ClassManager
-    
+
     let className: String
     let classSchedule: String
     let classColor: Color
+    var onSyncComplete: (() -> Void)? = nil
     
     @State private var showActionSheet = false
     @State private var showDocumentPicker = false
@@ -197,7 +198,8 @@ struct SyllabusUploadView: View {
                     className: className,
                     classSchedule: classSchedule,
                     classColor: classColor,
-                    events: parsedEvents
+                    events: parsedEvents,
+                    onSyncComplete: onSyncComplete
                 )
                 .environmentObject(classManager)
             }
