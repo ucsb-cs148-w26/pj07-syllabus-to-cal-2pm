@@ -17,6 +17,11 @@ struct SignInView: View {
     var body: some View {
         if showPDFUpload {
             PDFUploadView(isGuest: authManager.isGuest)
+                .onChange(of: authManager.isAuthenticated) { isAuthenticated in
+                    if !isAuthenticated {
+                        showPDFUpload = false
+                    }
+                }
         } else {
             ZStack(alignment: .bottom) {
                 LinearGradient(
