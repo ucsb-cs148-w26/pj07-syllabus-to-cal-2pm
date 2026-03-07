@@ -14,11 +14,14 @@ import PhotosUI
 struct SyllabusUploadView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var classManager: ClassManager
+    @EnvironmentObject var authManager: AuthManager
 
     let className: String
     let classSchedule: String
     let classColor: Color
     let existingClassID: UUID
+    /// Events already stored for this class — used for reconciliation on re-upload.
+    var existingEvents: [CalendarEvent] = []
     var onSyncComplete: (() -> Void)? = nil
     
     @State private var showActionSheet = false
@@ -204,6 +207,7 @@ struct SyllabusUploadView: View {
                     onSyncComplete: onSyncComplete
                 )
                 .environmentObject(classManager)
+                .environmentObject(authManager)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -303,6 +307,53 @@ struct SyllabusUploadView: View {
     }
 
     
+    // MARK: - Reconcile parsed events with existing local events
+    /// Merges newly parsed events with the class's existing events.
+    /// - Matching key: lowercased title + date.
+    /// - Matched + locally edited → keep the local (edited) version, carry over googleEventId.
+    /// - Matched + not edited → use the freshly parsed version, carry over googleEventId.
+    /// - Only in new parse → add as new (no googleEventId).
+    /// - Only in existing (no match) → append to preserve them; user can delete manually.
+    func reconcileEvents(parsed: [CalendarEvent], existing: [CalendarEvent]) -> [CalendarEvent] {
+        guard !existing.isEmpty else { return parsed }
+
+        func matchKey(_ ev: CalendarEvent) -> String {
+            ev.title.lowercased().trimmingCharacters(in: .whitespaces) + "_" + ev.date
+        }
+
+        var existingByKey: [String: CalendarEvent] = [:]
+        for ev in existing where !ev.isDeletedLocally {
+            existingByKey[matchKey(ev)] = ev
+        }
+
+        var result: [CalendarEvent] = []
+        var matchedKeys = Set<String>()
+
+        for var parsedEv in parsed {
+            let key = matchKey(parsedEv)
+            if let existingEv = existingByKey[key] {
+                matchedKeys.insert(key)
+                if existingEv.isEdited {
+                    // Preserve local edits
+                    result.append(existingEv)
+                } else {
+                    // Use fresh parse but carry over the Google event ID
+                    parsedEv.googleEventId = existingEv.googleEventId
+                    result.append(parsedEv)
+                }
+            } else {
+                result.append(parsedEv)
+            }
+        }
+
+        // Append existing events that weren't matched by the new parse
+        for ev in existing where !ev.isDeletedLocally && !matchedKeys.contains(matchKey(ev)) {
+            result.append(ev)
+        }
+
+        return result
+    }
+
     // MARK: - Upload PDF
     func uploadPDF(url: URL) {
         isUploading = true
@@ -349,12 +400,16 @@ struct SyllabusUploadView: View {
                         
                         DispatchQueue.main.async {
                             let notSyllabus = jsonResponse.events.contains { $0.isSyllabus == false }
-                            if jsonResponse.events.isEmpty || notSyllabus{
+                            if jsonResponse.events.isEmpty || notSyllabus {
                                 self.uploadError = "No events were found. Please ensure you are uploading a valid course syllabus and try again."
                                 self.isUploading = false
                                 return
                             }
-                            self.parsedEvents = jsonResponse.events
+                            // Reconcile parsed events with any existing local events
+                            self.parsedEvents = self.reconcileEvents(
+                                parsed: jsonResponse.events,
+                                existing: self.existingEvents
+                            )
                             self.isUploading = false
                             self.navigateToPreview = true
                         }
@@ -578,5 +633,6 @@ struct TextEntryView: View {
             existingClassID: UUID()
         )
         .environmentObject(ClassManager())
+        .environmentObject(AuthManager())
     }
 }

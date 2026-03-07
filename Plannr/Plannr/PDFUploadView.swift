@@ -136,14 +136,9 @@ struct PDFUploadView: View {
                 }
             }
             .navigationDestination(for: Class.self) { cls in
-                SyllabusUploadView(
-                    className: cls.name,
-                    classSchedule: cls.schedule,
-                    classColor: cls.color,
-                    existingClassID: cls.id,
-                    onSyncComplete: { navigationPath = NavigationPath() }
-                )
-                .environmentObject(classManager)
+                ClassEditView(cls: cls, onSyncComplete: { navigationPath = NavigationPath() })
+                    .environmentObject(classManager)
+                    .environmentObject(authManager)
             }
             .sheet(isPresented: $showAddClass) {
                 AddClassView()
@@ -274,7 +269,8 @@ struct ClassCard: View {
                 Spacer()
                 
                 // Status badge
-                if classItem.events.isEmpty {
+                switch classItem.status {
+                case .noSyllabus:
                     Text("NO SYLLABUS")
                         .font(.caption2)
                         .fontWeight(.bold)
@@ -283,7 +279,7 @@ struct ClassCard: View {
                         .padding(.vertical, 4)
                         .background(Color.orange.opacity(0.2))
                         .cornerRadius(8)
-                } else {
+                case .active:
                     Text("ACTIVE")
                         .font(.caption2)
                         .fontWeight(.bold)
@@ -291,6 +287,15 @@ struct ClassCard: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(classItem.color.opacity(0.2))
+                        .cornerRadius(8)
+                case .inactive:
+                    Text("INACTIVE")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
                         .cornerRadius(8)
                 }
                 
@@ -306,7 +311,8 @@ struct ClassCard: View {
             }
             
             // Event count / upload prompt
-            if classItem.events.isEmpty {
+            switch classItem.status {
+            case .noSyllabus:
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.doc")
                         .font(.caption)
@@ -314,8 +320,14 @@ struct ClassCard: View {
                         .font(.caption)
                 }
                 .foregroundColor(.orange.opacity(0.8))
-            } else {
-                Text("\(classItem.events.count) events synced")
+            case .active:
+                let visibleCount = classItem.events.filter { !$0.isDeletedLocally }.count
+                Text("\(visibleCount) events synced")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            case .inactive:
+                let visibleCount = classItem.events.filter { !$0.isDeletedLocally }.count
+                Text("\(visibleCount) events")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
@@ -357,6 +369,9 @@ struct CalendarEvent: Codable, Identifiable {
     var colorHex: String = "007AFF"
     var status: EventStatus = .pending
     var isSyllabus: Bool = true
+    var isEdited: Bool = false
+    var googleEventId: String? = nil
+    var isDeletedLocally: Bool = false
 
     var color: Color {
         get { Color(hex: colorHex) }
@@ -364,7 +379,7 @@ struct CalendarEvent: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, date, type, description, colorHex, status, isSyllabus
+        case id, title, date, type, description, colorHex, status, isSyllabus, isEdited, googleEventId, isDeletedLocally
     }
 
     init(title: String, date: String, type: String, description: String) {
@@ -385,6 +400,9 @@ struct CalendarEvent: Codable, Identifiable {
         colorHex = try container.decodeIfPresent(String.self, forKey: .colorHex) ?? "007AFF"
         status = try container.decodeIfPresent(EventStatus.self, forKey: .status) ?? .pending
         isSyllabus = try container.decodeIfPresent(Bool.self, forKey: .isSyllabus) ?? true
+        isEdited = try container.decodeIfPresent(Bool.self, forKey: .isEdited) ?? false
+        googleEventId = try container.decodeIfPresent(String.self, forKey: .googleEventId)
+        isDeletedLocally = try container.decodeIfPresent(Bool.self, forKey: .isDeletedLocally) ?? false
     }
 }
 

@@ -8,6 +8,12 @@
 import Foundation
 import SwiftUI
 
+enum ClassStatus: String, Codable {
+    case noSyllabus = "NO_SYLLABUS"
+    case active     = "ACTIVE"
+    case inactive   = "INACTIVE"
+}
+
 class ClassManager: ObservableObject {
     @Published var classes: [Class] = []
 
@@ -60,32 +66,92 @@ class ClassManager: ObservableObject {
 
 // Class model
 struct Class: Identifiable, Codable, Hashable {
-    static func == (lhs: Class, rhs: Class) -> Bool { lhs.id == rhs.id }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    static func == (lhs: Class, rhs: Class) -> Bool {
+        lhs.id == rhs.id
+            && lhs.colorHex == rhs.colorHex
+            && lhs.name == rhs.name
+            && lhs.schedule == rhs.schedule
+            && lhs.status == rhs.status
+            && lhs.hasUnsyncedChanges == rhs.hasUnsyncedChanges
+            && lhs.events.count == rhs.events.count
+    }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(colorHex)
+        hasher.combine(status)
+    }
     let id: UUID
     var name: String
     var schedule: String
     var colorHex: String
     var events: [CalendarEvent]
-    
+    var status: ClassStatus
+    var googleCalendarId: String?
+    var lastSynced: Date?
+    var hasUnsyncedChanges: Bool
+
     var color: Color {
         get { Color(hex: colorHex) }
         set { colorHex = newValue.toHex() }
     }
-    
-    init(name: String, schedule: String = "", colorHex: String = "007AFF", events: [CalendarEvent] = []) {
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, schedule, colorHex, events, status, googleCalendarId, lastSynced, hasUnsyncedChanges
+    }
+
+    init(
+        name: String,
+        schedule: String = "",
+        colorHex: String = "007AFF",
+        events: [CalendarEvent] = [],
+        status: ClassStatus = .noSyllabus,
+        googleCalendarId: String? = nil,
+        lastSynced: Date? = nil,
+        hasUnsyncedChanges: Bool = false
+    ) {
         self.id = UUID()
         self.name = name
         self.schedule = schedule
         self.colorHex = colorHex
         self.events = events
+        self.status = status
+        self.googleCalendarId = googleCalendarId
+        self.lastSynced = lastSynced
+        self.hasUnsyncedChanges = hasUnsyncedChanges
     }
 
-    init(id: UUID, name: String, schedule: String = "", colorHex: String = "007AFF", events: [CalendarEvent] = []) {
+    init(
+        id: UUID,
+        name: String,
+        schedule: String = "",
+        colorHex: String = "007AFF",
+        events: [CalendarEvent] = [],
+        status: ClassStatus = .noSyllabus,
+        googleCalendarId: String? = nil,
+        lastSynced: Date? = nil,
+        hasUnsyncedChanges: Bool = false
+    ) {
         self.id = id
         self.name = name
         self.schedule = schedule
         self.colorHex = colorHex
         self.events = events
+        self.status = status
+        self.googleCalendarId = googleCalendarId
+        self.lastSynced = lastSynced
+        self.hasUnsyncedChanges = hasUnsyncedChanges
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        schedule = try container.decodeIfPresent(String.self, forKey: .schedule) ?? ""
+        colorHex = try container.decodeIfPresent(String.self, forKey: .colorHex) ?? "007AFF"
+        events = try container.decodeIfPresent([CalendarEvent].self, forKey: .events) ?? []
+        status = try container.decodeIfPresent(ClassStatus.self, forKey: .status) ?? .noSyllabus
+        googleCalendarId = try container.decodeIfPresent(String.self, forKey: .googleCalendarId)
+        lastSynced = try container.decodeIfPresent(Date.self, forKey: .lastSynced)
+        hasUnsyncedChanges = try container.decodeIfPresent(Bool.self, forKey: .hasUnsyncedChanges) ?? false
     }
 }
