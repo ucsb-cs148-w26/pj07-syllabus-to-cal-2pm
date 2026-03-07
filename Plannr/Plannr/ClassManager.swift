@@ -10,11 +10,15 @@ import SwiftUI
 
 class ClassManager: ObservableObject {
     @Published var classes: [Class] = []
-    
+
     private let userDefaultsKey = "savedClasses"
-    
-    init() {
-        loadClasses()
+    private let isGuest: Bool
+
+    init(isGuest: Bool = false) {
+        self.isGuest = isGuest
+        if !isGuest {
+            loadClasses()
+        }
     }
     
     func addClass(_ newClass: Class) {
@@ -35,6 +39,7 @@ class ClassManager: ObservableObject {
     }
     
     private func saveClasses() {
+        guard !isGuest else { return }
         if let encoded = try? JSONEncoder().encode(classes) {
             UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
         }

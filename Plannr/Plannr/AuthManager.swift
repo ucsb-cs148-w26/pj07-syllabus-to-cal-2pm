@@ -10,6 +10,7 @@ import AuthenticationServices
 
 class AuthManager: ObservableObject {
     @Published var isAuthenticated: Bool = false
+    @Published var isGuest: Bool = false
     @Published var userEmail: String?
     @Published var userName: String?
     @Published var isLoading: Bool = false
@@ -82,6 +83,16 @@ class AuthManager: ObservableObject {
         }
     }
 
+    /// Sign in as guest — no data is persisted
+    func signInAsGuest() {
+        DispatchQueue.main.async {
+            self.isGuest = true
+            self.isAuthenticated = true
+            self.userEmail = nil
+            self.userName = "Guest"
+        }
+    }
+
     /// Sign out the user
     func signOut() {
         UserDefaults.standard.removeObject(forKey: "userEmail")
@@ -89,6 +100,7 @@ class AuthManager: ObservableObject {
 
         DispatchQueue.main.async {
             self.isAuthenticated = false
+            self.isGuest = false
             self.userEmail = nil
             self.userName = nil
         }
