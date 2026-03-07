@@ -18,6 +18,7 @@ struct SyllabusUploadView: View {
     let className: String
     let classSchedule: String
     let classColor: Color
+    let existingClassID: UUID
     var onSyncComplete: (() -> Void)? = nil
     
     @State private var showActionSheet = false
@@ -198,6 +199,7 @@ struct SyllabusUploadView: View {
                     className: className,
                     classSchedule: classSchedule,
                     classColor: classColor,
+                    existingClassID: existingClassID,
                     events: parsedEvents,
                     onSyncComplete: onSyncComplete
                 )
@@ -572,7 +574,8 @@ struct TextEntryView: View {
         SyllabusUploadView(
             className: "Advanced Calculus",
             classSchedule: "MWF 10:00 AM",
-            classColor: .blue
+            classColor: .blue,
+            existingClassID: UUID()
         )
         .environmentObject(ClassManager())
     }

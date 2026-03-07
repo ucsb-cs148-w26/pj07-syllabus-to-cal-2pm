@@ -15,6 +15,7 @@ struct CalendarPreviewView: View {
     let className: String
     let classSchedule: String
     let classColor: Color
+    let existingClassID: UUID
     var onSyncComplete: (() -> Void)? = nil
 
     @State private var events: [CalendarEvent]
@@ -30,10 +31,11 @@ struct CalendarPreviewView: View {
     @State private var showExportError = false
     @State private var sharedEventColor: Color
     
-    init(className: String, classSchedule: String, classColor: Color, events: [CalendarEvent], onSyncComplete: (() -> Void)? = nil) {
+    init(className: String, classSchedule: String, classColor: Color, existingClassID: UUID, events: [CalendarEvent], onSyncComplete: (() -> Void)? = nil) {
         self.className = className
         self.classSchedule = classSchedule
         self.classColor = classColor
+        self.existingClassID = existingClassID
         self.onSyncComplete = onSyncComplete
         _events = State(initialValue: events)
         _sharedEventColor = State(initialValue: classColor)
@@ -196,14 +198,16 @@ struct CalendarPreviewView: View {
             .alert(syncSuccess == true ? "Sync Complete" : "Sync Failed", isPresented: $showSyncAlert) {
                 Button("OK", role: .cancel) {
                     if syncSuccess == true {
-                        let newClass = Class(
+                        classManager.removeClassByID(existingClassID)
+                        classManager.addClass(Class(
                             name: className,
                             schedule: classSchedule,
                             colorHex: sharedEventColor.toHex(),
                             events: events.filter { $0.status == .accepted }
-                        )
-                        classManager.addClass(newClass)
-                        onSyncComplete?()
+                        ))
+                        DispatchQueue.main.async {
+                            onSyncComplete?()
+                        }
                     }
                 }
             } message: {
@@ -972,6 +976,7 @@ struct ActivityViewController: UIViewControllerRepresentable {
             className: "Advanced Calculus",
             classSchedule: "MWF 10:00 AM",
             classColor: .blue,
+            existingClassID: UUID(),
             events: [
                 CalendarEvent(title: "Midterm Exam", date: "2026-03-15", type: "exam", description: "Chapters 1-5"),
                 CalendarEvent(title: "Homework 3", date: "2026-03-20", type: "homework", description: "Problems 1-10")

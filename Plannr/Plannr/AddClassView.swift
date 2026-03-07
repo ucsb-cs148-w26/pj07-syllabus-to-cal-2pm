@@ -11,25 +11,22 @@ struct AddClassView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var classManager: ClassManager
 
-    var onSyncComplete: (() -> Void)? = nil
-
     @State private var className: String = ""
     @State private var classSchedule: String = ""
     @State private var selectedColor: Color = .blue
-    @State private var navigateToUpload = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black.ignoresSafeArea()
-                
+
                 VStack(spacing: 24) {
                     Text("Add New Class")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .padding(.top, 20)
-                    
+
                     VStack(spacing: 20) {
                         // Class Name
                         VStack(alignment: .leading, spacing: 8) {
@@ -42,7 +39,7 @@ struct AddClassView: View {
                                 .foregroundColor(.white)
                                 .cornerRadius(8)
                         }
-                        
+
                         // Schedule (optional)
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Schedule (Optional)")
@@ -54,17 +51,30 @@ struct AddClassView: View {
                                 .foregroundColor(.white)
                                 .cornerRadius(8)
                         }
-                        
+
+                        // Color picker
+                        HStack {
+                            Text("Class Color")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Spacer()
+                            ColorPicker("", selection: $selectedColor)
+                                .labelsHidden()
+                        }
                     }
                     .padding(.horizontal)
-                    
+
                     Spacer()
-                    
-                    // Continue Button
+
                     Button {
-                        navigateToUpload = true
+                        classManager.addClass(Class(
+                            name: className,
+                            schedule: classSchedule,
+                            colorHex: selectedColor.toHex()
+                        ))
+                        dismiss()
                     } label: {
-                        Text("Continue to Upload Syllabus")
+                        Text("Add Class")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -85,15 +95,6 @@ struct AddClassView: View {
                     }
                     .foregroundColor(.white)
                 }
-            }
-            .navigationDestination(isPresented: $navigateToUpload) {
-                SyllabusUploadView(
-                    className: className,
-                    classSchedule: classSchedule,
-                    classColor: selectedColor,
-                    onSyncComplete: onSyncComplete
-                )
-                .environmentObject(classManager)
             }
         }
     }
