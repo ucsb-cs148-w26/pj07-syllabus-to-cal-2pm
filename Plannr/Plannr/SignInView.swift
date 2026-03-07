@@ -16,7 +16,12 @@ struct SignInView: View {
 
     var body: some View {
         if showPDFUpload {
-            PDFUploadView()
+            PDFUploadView(isGuest: authManager.isGuest)
+                .onChange(of: authManager.isAuthenticated) { isAuthenticated in
+                    if !isAuthenticated {
+                        showPDFUpload = false
+                    }
+                }
         } else {
             ZStack(alignment: .bottom) {
                 LinearGradient(
@@ -88,6 +93,24 @@ struct SignInView: View {
                         )
                         .cornerRadius(14)
                         .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
+                    }
+                    .disabled(isAuthenticating)
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 12)
+
+                    Button(action: {
+                        authManager.signInAsGuest()
+                        showPDFUpload = true
+                    }) {
+                        Text("Continue as Guest")
+                            .font(.system(size: 16, weight: .medium, design: .serif))
+                            .foregroundColor(.white.opacity(0.75))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.35), lineWidth: 1.5)
+                            )
                     }
                     .disabled(isAuthenticating)
                     .padding(.horizontal, 32)

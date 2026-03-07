@@ -10,11 +10,15 @@ import SwiftUI
 
 class ClassManager: ObservableObject {
     @Published var classes: [Class] = []
-    
+
     private let userDefaultsKey = "savedClasses"
-    
-    init() {
-        loadClasses()
+    private let isGuest: Bool
+
+    init(isGuest: Bool = false) {
+        self.isGuest = isGuest
+        if !isGuest {
+            loadClasses()
+        }
     }
     
     func addClass(_ newClass: Class) {
@@ -26,6 +30,11 @@ class ClassManager: ObservableObject {
         classes.removeAll { $0.id == classToRemove.id }
         saveClasses()
     }
+
+    func removeClassByID(_ id: UUID) {
+        classes.removeAll { $0.id == id }
+        saveClasses()
+    }
     
     func updateClass(_ updatedClass: Class) {
         if let index = classes.firstIndex(where: { $0.id == updatedClass.id }) {
@@ -35,6 +44,7 @@ class ClassManager: ObservableObject {
     }
     
     private func saveClasses() {
+        guard !isGuest else { return }
         if let encoded = try? JSONEncoder().encode(classes) {
             UserDefaults.standard.set(encoded, forKey: userDefaultsKey)
         }
@@ -49,7 +59,9 @@ class ClassManager: ObservableObject {
 }
 
 // Class model
-struct Class: Identifiable, Codable {
+struct Class: Identifiable, Codable, Hashable {
+    static func == (lhs: Class, rhs: Class) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
     let id: UUID
     var name: String
     var schedule: String
@@ -63,6 +75,14 @@ struct Class: Identifiable, Codable {
     
     init(name: String, schedule: String = "", colorHex: String = "007AFF", events: [CalendarEvent] = []) {
         self.id = UUID()
+        self.name = name
+        self.schedule = schedule
+        self.colorHex = colorHex
+        self.events = events
+    }
+
+    init(id: UUID, name: String, schedule: String = "", colorHex: String = "007AFF", events: [CalendarEvent] = []) {
+        self.id = id
         self.name = name
         self.schedule = schedule
         self.colorHex = colorHex
