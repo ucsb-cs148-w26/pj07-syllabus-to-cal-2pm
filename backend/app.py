@@ -30,6 +30,22 @@ class CalendarEvent(BaseModel):
 class CalendarSyncRequest(BaseModel):
     events: List[CalendarEvent]
 
+
+class SyncEventRequest(BaseModel):
+    local_id: str
+    title: str
+    date: str
+    description: Optional[str] = ""
+    type: Optional[str] = "other"
+    google_event_id: Optional[str] = None
+    is_deleted: bool = False
+
+
+class CalendarClassSyncRequest(BaseModel):
+    class_name: str
+    google_calendar_id: Optional[str] = None
+    events: List[SyncEventRequest]
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -474,6 +490,136 @@ async def add_to_calendar(email: str = Query(...), request: CalendarSyncRequest 
             status_code=400,
             content={"error": f"Failed to add events to calendar: {str(e)}"}
         )
+
+
+def _find_or_create_calendar(service, class_name: str) -> str:
+    """Find a secondary calendar by name, or create one. Returns the calendar ID."""
+    calendar_list = service.calendarList().list().execute()
+    for cal in calendar_list.get('items', []):
+        if cal.get('summary') == class_name:
+            return cal['id']
+    # Not found — create a new secondary calendar
+    new_cal = service.calendars().insert(body={'summary': class_name}).execute()
+    return new_cal['id']
+
+
+def _build_google_event_body(event: SyncEventRequest) -> dict:
+    return {
+        'summary': event.title,
+        'description': event.description or '',
+        'start': {'date': event.date},
+        'end': {'date': event.date},
+    }
+
+
+@app.post('/calendar/sync', tags=['Syllabus to Calendar'])
+async def sync_class_calendar(email: str = Query(...), request: CalendarClassSyncRequest = Body(...)):
+    """
+    Idempotent sync of a class's events to a dedicated secondary Google Calendar.
+
+    - Creates the secondary calendar if it doesn't exist yet (find-or-create by name).
+    - Updates events that already have a google_event_id.
+    - Inserts new events that have no google_event_id.
+    - Deletes events marked is_deleted=True (if they have a google_event_id).
+    - Falls back to a full rebuild if incremental sync fails.
+
+    Returns the google_calendar_id and per-event mappings {local_id, google_event_id}.
+    """
+    try:
+        creds_json = fetch_user_creds(email)
+        if not creds_json:
+            return JSONResponse(status_code=401, content={"error": "User not authenticated."})
+
+        creds_data = json.loads(creds_json)
+        credentials = Credentials(
+            token=creds_data.get('token'),
+            refresh_token=creds_data.get('refresh_token'),
+            token_uri=creds_data.get('token_uri'),
+            client_id=creds_data.get('client_id'),
+            client_secret=creds_data.get('client_secret'),
+            scopes=creds_data.get('scopes')
+        )
+        service = build('calendar', 'v3', credentials=credentials)
+
+        # ── Step 1: get or create the secondary calendar ──────────────────────
+        cal_id = None
+        if request.google_calendar_id:
+            try:
+                service.calendars().get(calendarId=request.google_calendar_id).execute()
+                cal_id = request.google_calendar_id
+            except Exception:
+                # Calendar was deleted externally — fall through to find-or-create
+                pass
+        if not cal_id:
+            cal_id = _find_or_create_calendar(service, request.class_name)
+
+        # ── Step 2: incremental sync ──────────────────────────────────────────
+        synced_events = []
+        try:
+            for event in request.events:
+                if event.is_deleted:
+                    if event.google_event_id:
+                        try:
+                            service.events().delete(
+                                calendarId=cal_id, eventId=event.google_event_id
+                            ).execute()
+                        except Exception:
+                            pass  # already deleted — that's fine
+                    # deleted events are not returned in synced_events
+                elif event.google_event_id:
+                    # Update existing event
+                    updated = service.events().update(
+                        calendarId=cal_id,
+                        eventId=event.google_event_id,
+                        body=_build_google_event_body(event)
+                    ).execute()
+                    synced_events.append({"local_id": event.local_id, "google_event_id": updated['id']})
+                else:
+                    # Insert new event
+                    created = service.events().insert(
+                        calendarId=cal_id,
+                        body=_build_google_event_body(event)
+                    ).execute()
+                    synced_events.append({"local_id": event.local_id, "google_event_id": created['id']})
+
+        except Exception as incremental_err:
+            # ── Fallback: rebuild the entire calendar ─────────────────────────
+            print(f"Incremental sync failed ({incremental_err}), falling back to full rebuild.")
+            # Delete all events in the calendar
+            page_token = None
+            while True:
+                events_result = service.events().list(
+                    calendarId=cal_id, pageToken=page_token
+                ).execute()
+                for ev in events_result.get('items', []):
+                    try:
+                        service.events().delete(calendarId=cal_id, eventId=ev['id']).execute()
+                    except Exception:
+                        pass
+                page_token = events_result.get('nextPageToken')
+                if not page_token:
+                    break
+
+            synced_events = []
+            for event in request.events:
+                if event.is_deleted:
+                    continue
+                created = service.events().insert(
+                    calendarId=cal_id,
+                    body=_build_google_event_body(event)
+                ).execute()
+                synced_events.append({"local_id": event.local_id, "google_event_id": created['id']})
+
+        return JSONResponse(status_code=200, content={
+            "google_calendar_id": cal_id,
+            "synced_events": synced_events
+        })
+
+    except Exception as e:
+        print(f"Calendar sync error: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(status_code=400, content={"error": f"Sync failed: {str(e)}"})
 
 
 @app.post('/export', tags=['Export'])
