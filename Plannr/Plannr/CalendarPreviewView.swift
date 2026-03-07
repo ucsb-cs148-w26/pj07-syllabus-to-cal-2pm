@@ -10,11 +10,14 @@ import SwiftUI
 struct CalendarPreviewView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var classManager: ClassManager
+    @EnvironmentObject var authManager: AuthManager
     
     let className: String
     let classSchedule: String
     let classColor: Color
-    
+    let existingClassID: UUID
+    var onSyncComplete: (() -> Void)? = nil
+
     @State private var events: [CalendarEvent]
     @State private var editingEvent: CalendarEvent?
     @State private var isSyncing = false
@@ -28,10 +31,12 @@ struct CalendarPreviewView: View {
     @State private var showExportError = false
     @State private var sharedEventColor: Color
     
-    init(className: String, classSchedule: String, classColor: Color, events: [CalendarEvent]) {
+    init(className: String, classSchedule: String, classColor: Color, existingClassID: UUID, events: [CalendarEvent], onSyncComplete: (() -> Void)? = nil) {
         self.className = className
         self.classSchedule = classSchedule
         self.classColor = classColor
+        self.existingClassID = existingClassID
+        self.onSyncComplete = onSyncComplete
         _events = State(initialValue: events)
         _sharedEventColor = State(initialValue: classColor)
     }
@@ -87,27 +92,44 @@ struct CalendarPreviewView: View {
                 }
 
                 // Sticky Sync button
-                Button(action: {
-                    syncToCalendar()
-                }) {
+                if authManager.isGuest {
                     HStack(spacing: 8) {
-                        if isSyncing {
-                            ProgressView()
-                                .tint(.white)
-                        }
-                        Text(isSyncing ? "Adding..." : "Add to Google Calendar")
+                        Image(systemName: "lock.fill")
+                            .font(.subheadline)
+                        Text("Sign in to sync to Google Calendar")
                             .font(.headline)
-                            .foregroundColor(.white)
                     }
+                    .foregroundColor(.white.opacity(0.5))
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(isSyncing ? Color.gray : Color.blue)
+                    .background(Color.gray.opacity(0.3))
                     .cornerRadius(12)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color.black)
+                } else {
+                    Button(action: {
+                        syncToCalendar()
+                    }) {
+                        HStack(spacing: 8) {
+                            if isSyncing {
+                                ProgressView()
+                                    .tint(.white)
+                            }
+                            Text(isSyncing ? "Syncing..." : "Sync!")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isSyncing ? Color.gray : Color.blue)
+                        .cornerRadius(12)
+                    }
+                    .disabled(isSyncing)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color.black)
                 }
-                .disabled(isSyncing)
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                .background(Color.black)
             }
             .sheet(item: $editingEvent) { event in
                 EventEditView(event: event) { updatedEvent in
@@ -120,27 +142,16 @@ struct CalendarPreviewView: View {
             .alert(syncSuccess == true ? "Succesfully added all events to your Google Calendar" : "Failed to add to your Google Calendar", isPresented: $showSyncAlert) {
                 Button("OK", role: .cancel) {
                     if syncSuccess == true {
-                        // Save class and navigate home
-                        let newClass = Class(
+                        classManager.removeClassByID(existingClassID)
+                        classManager.addClass(Class(
                             name: className,
                             schedule: classSchedule,
                             colorHex: sharedEventColor.toHex(),
                             events: events.filter { $0.status == .accepted }
-                        )
-                        classManager.addClass(newClass)
-                        
-                        // Dismiss all the way to root (COULDN'T TEST THIS)
-                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                           let window = windowScene.windows.first,
-                           let rootVC = window.rootViewController {
-                            // Pop to root view controller
-                            if let navController = rootVC as? UINavigationController {
-                                navController.popToRootViewController(animated: true)
-                            }
+                        ))
+                        DispatchQueue.main.async {
+                            onSyncComplete?()
                         }
-
-                        // Dismiss back to home
-                        dismiss()
                     }
                 }
             } message: {
@@ -183,10 +194,10 @@ struct CalendarPreviewView: View {
     }
 
     func exportEvents(format: String) {
-        guard let email = UserDefaults.standard.string(forKey: "userEmail"),
-              let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+        let email = UserDefaults.standard.string(forKey: "userEmail") ?? "guest@plannr.local"
+        guard let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "\(BACKEND_URL)/export?email=\(encodedEmail)&format=\(format)") else {
-            exportErrorMessage = "Could not determine your account email. Please sign in again."
+            exportErrorMessage = "Could not build export URL."
             showExportError = true
             return
         }
@@ -909,11 +920,13 @@ struct ActivityViewController: UIViewControllerRepresentable {
             className: "Advanced Calculus",
             classSchedule: "MWF 10:00 AM",
             classColor: .blue,
+            existingClassID: UUID(),
             events: [
                 CalendarEvent(title: "Midterm Exam", date: "2026-03-15", type: "exam", description: "Chapters 1-5"),
                 CalendarEvent(title: "Homework 3", date: "2026-03-20", type: "homework", description: "Problems 1-10")
             ]
         )
         .environmentObject(ClassManager())
+        .environmentObject(AuthManager())
     }
 }
