@@ -15,7 +15,9 @@ struct CalendarPreviewView: View {
     let className: String
     let classSchedule: String
     let classColor: Color
-    
+    let existingClassID: UUID
+    var onSyncComplete: (() -> Void)? = nil
+
     @State private var events: [CalendarEvent]
     @State private var editingEvent: CalendarEvent?
     @State private var isSyncing = false
@@ -29,10 +31,12 @@ struct CalendarPreviewView: View {
     @State private var showExportError = false
     @State private var sharedEventColor: Color
     
-    init(className: String, classSchedule: String, classColor: Color, events: [CalendarEvent]) {
+    init(className: String, classSchedule: String, classColor: Color, existingClassID: UUID, events: [CalendarEvent], onSyncComplete: (() -> Void)? = nil) {
         self.className = className
         self.classSchedule = classSchedule
         self.classColor = classColor
+        self.existingClassID = existingClassID
+        self.onSyncComplete = onSyncComplete
         _events = State(initialValue: events)
         _sharedEventColor = State(initialValue: classColor)
     }
@@ -138,27 +142,16 @@ struct CalendarPreviewView: View {
             .alert(syncSuccess == true ? "Succesfully added all events to your Google Calendar" : "Failed to add to your Google Calendar", isPresented: $showSyncAlert) {
                 Button("OK", role: .cancel) {
                     if syncSuccess == true {
-                        // Save class and navigate home
-                        let newClass = Class(
+                        classManager.removeClassByID(existingClassID)
+                        classManager.addClass(Class(
                             name: className,
                             schedule: classSchedule,
                             colorHex: sharedEventColor.toHex(),
                             events: events.filter { $0.status == .accepted }
-                        )
-                        classManager.addClass(newClass)
-                        
-                        // Dismiss all the way to root (COULDN'T TEST THIS)
-                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                           let window = windowScene.windows.first,
-                           let rootVC = window.rootViewController {
-                            // Pop to root view controller
-                            if let navController = rootVC as? UINavigationController {
-                                navController.popToRootViewController(animated: true)
-                            }
+                        ))
+                        DispatchQueue.main.async {
+                            onSyncComplete?()
                         }
-
-                        // Dismiss back to home
-                        dismiss()
                     }
                 }
             } message: {
@@ -927,6 +920,7 @@ struct ActivityViewController: UIViewControllerRepresentable {
             className: "Advanced Calculus",
             classSchedule: "MWF 10:00 AM",
             classColor: .blue,
+            existingClassID: UUID(),
             events: [
                 CalendarEvent(title: "Midterm Exam", date: "2026-03-15", type: "exam", description: "Chapters 1-5"),
                 CalendarEvent(title: "Homework 3", date: "2026-03-20", type: "homework", description: "Problems 1-10")

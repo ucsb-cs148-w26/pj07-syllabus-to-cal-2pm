@@ -14,10 +14,12 @@ import PhotosUI
 struct SyllabusUploadView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var classManager: ClassManager
-    
+
     let className: String
     let classSchedule: String
     let classColor: Color
+    let existingClassID: UUID
+    var onSyncComplete: (() -> Void)? = nil
     
     @State private var showActionSheet = false
     @State private var showDocumentPicker = false
@@ -197,7 +199,9 @@ struct SyllabusUploadView: View {
                     className: className,
                     classSchedule: classSchedule,
                     classColor: classColor,
-                    events: parsedEvents
+                    existingClassID: existingClassID,
+                    events: parsedEvents,
+                    onSyncComplete: onSyncComplete
                 )
                 .environmentObject(classManager)
             }
@@ -570,7 +574,8 @@ struct TextEntryView: View {
         SyllabusUploadView(
             className: "Advanced Calculus",
             classSchedule: "MWF 10:00 AM",
-            classColor: .blue
+            classColor: .blue,
+            existingClassID: UUID()
         )
         .environmentObject(ClassManager())
     }

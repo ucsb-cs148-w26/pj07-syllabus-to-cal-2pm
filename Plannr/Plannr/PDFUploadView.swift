@@ -13,13 +13,14 @@ struct PDFUploadView: View {
     @StateObject private var classManager: ClassManager
     @EnvironmentObject var authManager: AuthManager
     @State private var showAddClass = false
+    @State private var navigationPath = NavigationPath()
 
     init(isGuest: Bool = false) {
         _classManager = StateObject(wrappedValue: ClassManager(isGuest: isGuest))
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 Color.black.ignoresSafeArea()
 
@@ -71,18 +72,21 @@ struct PDFUploadView: View {
                     .padding(.horizontal)
                     .padding(.top, 20)
                     .padding(.bottom, 16)
-                    
+
                     ScrollView {
                         VStack(spacing: 16) {
                             // Existing classes
                             if !classManager.classes.isEmpty {
                                 ForEach(classManager.classes) { classItem in
-                                    ClassCard(classItem: classItem)
-                                        .environmentObject(classManager)
-                                        .padding(.horizontal)
+                                    NavigationLink(value: classItem) {
+                                        ClassCard(classItem: classItem)
+                                            .environmentObject(classManager)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .padding(.horizontal)
                                 }
                             }
-                            
+
                             // Add New Class Button
                             Button {
                                 showAddClass = true
@@ -104,6 +108,16 @@ struct PDFUploadView: View {
                         .padding(.bottom, 40)
                     }
                 }
+            }
+            .navigationDestination(for: Class.self) { cls in
+                SyllabusUploadView(
+                    className: cls.name,
+                    classSchedule: cls.schedule,
+                    classColor: cls.color,
+                    existingClassID: cls.id,
+                    onSyncComplete: { navigationPath = NavigationPath() }
+                )
+                .environmentObject(classManager)
             }
             .sheet(isPresented: $showAddClass) {
                 AddClassView()
@@ -144,15 +158,26 @@ struct ClassCard: View {
                 
                 Spacer()
                 
-                // Active badge
-                Text("ACTIVE")
-                    .font(.caption2)
-                    .fontWeight(.bold)
-                    .foregroundColor(classItem.color)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(classItem.color.opacity(0.2))
-                    .cornerRadius(8)
+                // Status badge
+                if classItem.events.isEmpty {
+                    Text("NO SYLLABUS")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.orange.opacity(0.2))
+                        .cornerRadius(8)
+                } else {
+                    Text("ACTIVE")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(classItem.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(classItem.color.opacity(0.2))
+                        .cornerRadius(8)
+                }
                 
                 // Delete button
                 Button {
@@ -165,9 +190,17 @@ struct ClassCard: View {
                 .padding(.leading, 8)
             }
             
-            // Event count
-            if !classItem.events.isEmpty {
-                Text("\(classItem.events.count) events")
+            // Event count / upload prompt
+            if classItem.events.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.doc")
+                        .font(.caption)
+                    Text("Tap to upload syllabus")
+                        .font(.caption)
+                }
+                .foregroundColor(.orange.opacity(0.8))
+            } else {
+                Text("\(classItem.events.count) events synced")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
