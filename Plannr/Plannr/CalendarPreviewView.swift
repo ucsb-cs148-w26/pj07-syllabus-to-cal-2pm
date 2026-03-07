@@ -67,62 +67,6 @@ struct CalendarPreviewView: View {
                         CalendarGridView(events: events, sharedEventColor: sharedEventColor)
                             .padding(.horizontal)
 
-                        // Accept All / Decline All buttons
-                        HStack(spacing: 12) {
-                            Button(action: {
-                                for index in events.indices {
-                                    events[index].status = .accepted
-                                }
-                            }) {
-                                Text("Accept All")
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
-                                    .background(Color.green)
-                                    .cornerRadius(8)
-                            }
-
-                            Button(action: {
-                                for index in events.indices {
-                                    events[index].status = .declined
-                                }
-                            }) {
-                                Text("Decline All")
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
-                                    .background(Color.red)
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .padding(.horizontal)
-
-                        Text("Your Events")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal)
-
-                        Text("\(events.count) items found")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .padding(.horizontal)
-
-                        // Shared event color picker
-                        HStack {
-                            Text("Event Color")
-                                .font(.subheadline)
-                                .foregroundColor(.white)
-                            Spacer()
-                            ColorPicker("", selection: $sharedEventColor)
-                                .labelsHidden()
-                        }
-                        .padding(.horizontal)
-
                         // Events list
                         VStack(spacing: 12) {
                             ForEach(events.indices, id: \.self) { index in
@@ -195,7 +139,7 @@ struct CalendarPreviewView: View {
                     editingEvent = nil
                 }
             }
-            .alert(syncSuccess == true ? "Sync Complete" : "Sync Failed", isPresented: $showSyncAlert) {
+            .alert(syncSuccess == true ? "Succesfully added all events to your Google Calendar" : "Failed to add to your Google Calendar", isPresented: $showSyncAlert) {
                 Button("OK", role: .cancel) {
                     if syncSuccess == true {
                         classManager.removeClassByID(existingClassID)
