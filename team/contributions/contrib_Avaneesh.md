@@ -2,11 +2,14 @@
 
 ## UI Updates
 
-Updated the initial view of the tasks extracted by Gemini to create a cleaner and more readable UI.
+Updated the UI for the tasks extracted by Gemini to improve layout and readability.
+
+- Updated the card view displaying extracted tasks to fill the screen
+- Adjusted the layout to create a cleaner and more readable interface
 
 ## Input Handling Development
 
-Implemented multiple input methods for the application to allow users to provide content in different formats.
+Implemented multiple input methods to allow users to provide content in different formats.
 
 - Added support for PDF input so users can upload and process PDF documents
 - Implemented gallery upload functionality to allow users to select images from their device
@@ -15,6 +18,8 @@ Implemented multiple input methods for the application to allow users to provide
 
 ## Input Integration
 
-Integrated the different input types into the application workflow to ensure a consistent and seamless user experience across all supported input formats.
+Integrated the different input types into the application workflow for consistent processing.
 
 - Converted different input types into PDF format to improve Gemini parsing and processing
+- Handled file preparation and temporary storage before sending inputs to Gemini
+- Added error handling for cases where file uploads or scans failed
