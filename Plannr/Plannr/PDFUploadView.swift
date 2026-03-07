@@ -19,6 +19,7 @@ struct PDFUploadView: View {
     @State private var showAddClass = false
     @State private var navigationPath = NavigationPath()
     @State private var selectedTab: AppTab = .myClasses
+    @State private var showProfileSheet = false
 
     init(isGuest: Bool = false) {
         _classManager = StateObject(wrappedValue: ClassManager(isGuest: isGuest))
@@ -69,8 +70,9 @@ struct PDFUploadView: View {
 
                         Spacer()
 
-                        // User profile button (for when profiles are implemented)
+                        // User profile button
                         Button {
+                            showProfileSheet = true
                         } label: {
                             ZStack {
                                 Circle()
@@ -147,7 +149,96 @@ struct PDFUploadView: View {
                 AddClassView()
                     .environmentObject(classManager)
             }
+            .sheet(isPresented: $showProfileSheet) {
+                ProfileSheetView()
+                    .environmentObject(authManager)
+            }
         }
+    }
+}
+
+struct ProfileSheetView: View {
+    @EnvironmentObject var authManager: AuthManager
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 32) {
+                // Handle bar
+                Capsule()
+                    .fill(Color.gray.opacity(0.5))
+                    .frame(width: 40, height: 4)
+                    .padding(.top, 12)
+
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(Color.yellow.opacity(0.2))
+                        .frame(width: 80, height: 80)
+                    if authManager.isGuest {
+                        Text("G")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.yellow)
+                    } else {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.yellow)
+                    }
+                }
+
+                // User info
+                VStack(spacing: 6) {
+                    if authManager.isGuest {
+                        Text("Guest User")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                        Text("Sign in to save your data across sessions")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    } else {
+                        if let name = authManager.userName {
+                            Text(name)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                        }
+                        if let email = authManager.userEmail {
+                            Text(email)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                // Sign out button
+                Button {
+                    authManager.signOut()
+                    dismiss()
+                } label: {
+                    HStack {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                        Text(authManager.isGuest ? "Exit Guest Mode" : "Sign Out")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(red: 1, green: 0.72, blue: 0.11))
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 40)
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.hidden)
     }
 }
 
