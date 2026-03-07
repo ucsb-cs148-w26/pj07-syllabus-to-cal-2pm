@@ -9,11 +9,16 @@ import SwiftUI
 
 let BACKEND_URL = "https://cs148.misc.iamjiamingliu.com/cs148api/"
 
+enum AppTab {
+    case myClasses, calendar
+}
+
 struct PDFUploadView: View {
     @StateObject private var classManager: ClassManager
     @EnvironmentObject var authManager: AuthManager
     @State private var showAddClass = false
     @State private var navigationPath = NavigationPath()
+    @State private var selectedTab: AppTab = .myClasses
 
     init(isGuest: Bool = false) {
         _classManager = StateObject(wrappedValue: ClassManager(isGuest: isGuest))
@@ -43,10 +48,24 @@ struct PDFUploadView: View {
 
                     // Header
                     HStack {
-                        Text("My Classes")
+                        Menu {
+                            Button(action: { selectedTab = .myClasses }) {
+                                Label("My Classes", systemImage: "list.bullet")
+                            }
+                            Button(action: { selectedTab = .calendar }) {
+                                Label("Calendar", systemImage: "calendar")
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                        }
+
+                        Text(selectedTab == .myClasses ? "My Classes" : "Calendar")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
+                            .padding(.leading, 8)
 
                         Spacer()
 
@@ -73,39 +92,44 @@ struct PDFUploadView: View {
                     .padding(.top, 20)
                     .padding(.bottom, 16)
 
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            // Existing classes
-                            if !classManager.classes.isEmpty {
-                                ForEach(classManager.classes) { classItem in
-                                    NavigationLink(value: classItem) {
-                                        ClassCard(classItem: classItem)
-                                            .environmentObject(classManager)
+                    if selectedTab == .myClasses {
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                // Existing classes
+                                if !classManager.classes.isEmpty {
+                                    ForEach(classManager.classes) { classItem in
+                                        NavigationLink(value: classItem) {
+                                            ClassCard(classItem: classItem)
+                                                .environmentObject(classManager)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .padding(.horizontal)
                                     }
-                                    .buttonStyle(.plain)
-                                    .padding(.horizontal)
                                 }
-                            }
 
-                            // Add New Class Button
-                            Button {
-                                showAddClass = true
-                            } label: {
-                                HStack {
-                                    Image(systemName: "plus.circle.fill")
-                                    Text("Add New Class")
+                                // Add New Class Button
+                                Button {
+                                    showAddClass = true
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "plus.circle.fill")
+                                        Text("Add New Class")
+                                    }
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .cornerRadius(12)
                                 }
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .cornerRadius(12)
+                                .padding(.horizontal)
+                                .padding(.top, 8)
                             }
-                            .padding(.horizontal)
-                            .padding(.top, 8)
+                            .padding(.bottom, 40)
                         }
-                        .padding(.bottom, 40)
+                    } else {
+                        UnifiedCalendarView()
+                            .environmentObject(classManager)
                     }
                 }
             }
