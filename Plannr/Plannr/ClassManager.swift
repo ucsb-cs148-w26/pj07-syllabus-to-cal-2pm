@@ -88,6 +88,7 @@ struct Class: Identifiable, Codable, Hashable {
     var status: ClassStatus
     var googleCalendarId: String?
     var lastSynced: Date?
+    var endDate: Date?
     var hasUnsyncedChanges: Bool
 
     var color: Color {
@@ -96,7 +97,7 @@ struct Class: Identifiable, Codable, Hashable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, schedule, colorHex, events, status, googleCalendarId, lastSynced, hasUnsyncedChanges
+        case id, name, schedule, colorHex, events, status, googleCalendarId, lastSynced, endDate, hasUnsyncedChanges
     }
 
     init(
@@ -107,6 +108,7 @@ struct Class: Identifiable, Codable, Hashable {
         status: ClassStatus = .noSyllabus,
         googleCalendarId: String? = nil,
         lastSynced: Date? = nil,
+        endDate: Date? = nil,
         hasUnsyncedChanges: Bool = false
     ) {
         self.id = UUID()
@@ -117,6 +119,7 @@ struct Class: Identifiable, Codable, Hashable {
         self.status = status
         self.googleCalendarId = googleCalendarId
         self.lastSynced = lastSynced
+        self.endDate = endDate
         self.hasUnsyncedChanges = hasUnsyncedChanges
     }
 
@@ -129,6 +132,7 @@ struct Class: Identifiable, Codable, Hashable {
         status: ClassStatus = .noSyllabus,
         googleCalendarId: String? = nil,
         lastSynced: Date? = nil,
+        endDate: Date? = nil,
         hasUnsyncedChanges: Bool = false
     ) {
         self.id = id
@@ -139,6 +143,7 @@ struct Class: Identifiable, Codable, Hashable {
         self.status = status
         self.googleCalendarId = googleCalendarId
         self.lastSynced = lastSynced
+        self.endDate = endDate
         self.hasUnsyncedChanges = hasUnsyncedChanges
     }
 
@@ -152,6 +157,7 @@ struct Class: Identifiable, Codable, Hashable {
         status = try container.decodeIfPresent(ClassStatus.self, forKey: .status) ?? .noSyllabus
         googleCalendarId = try container.decodeIfPresent(String.self, forKey: .googleCalendarId)
         lastSynced = try container.decodeIfPresent(Date.self, forKey: .lastSynced)
+        endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
         hasUnsyncedChanges = try container.decodeIfPresent(Bool.self, forKey: .hasUnsyncedChanges) ?? false
     }
 }

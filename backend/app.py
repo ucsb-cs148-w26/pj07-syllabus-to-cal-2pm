@@ -44,6 +44,7 @@ class SyncEventRequest(BaseModel):
 class CalendarClassSyncRequest(BaseModel):
     class_name: str
     google_calendar_id: Optional[str] = None
+    rename_calendar_to: Optional[str] = None  # rename the secondary calendar if provided
     events: List[SyncEventRequest]
 
 # Load environment variables from .env file
@@ -552,6 +553,16 @@ async def sync_class_calendar(email: str = Query(...), request: CalendarClassSyn
                 pass
         if not cal_id:
             cal_id = _find_or_create_calendar(service, request.class_name)
+
+        # ── Optional: rename the calendar if requested ────────────────────────
+        if request.rename_calendar_to:
+            try:
+                service.calendars().patch(
+                    calendarId=cal_id,
+                    body={'summary': request.rename_calendar_to}
+                ).execute()
+            except Exception as rename_err:
+                print(f"Calendar rename failed (non-fatal): {rename_err}")
 
         # ── Step 2: incremental sync ──────────────────────────────────────────
         synced_events = []

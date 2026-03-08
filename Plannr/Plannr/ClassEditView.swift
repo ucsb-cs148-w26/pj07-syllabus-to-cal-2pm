@@ -42,11 +42,15 @@ struct ClassEditView: View {
     @State private var showSyncError = false
     @State private var showSyncSuccess = false
     @State private var navigateToUpload = false
+    @State private var showEndDatePicker = false
+    // Tracks the name last synced to Google Calendar; used to detect renames
+    @State private var originalName: String
 
     var onSyncComplete: (() -> Void)?
 
     init(cls: Class, onSyncComplete: (() -> Void)? = nil) {
         _editableClass = State(initialValue: cls)
+        _originalName = State(initialValue: cls.name)
         self.onSyncComplete = onSyncComplete
     }
 
@@ -127,6 +131,12 @@ struct ClassEditView: View {
             // Refresh from classManager in case another view updated it
             if let latest = classManager.classes.first(where: { $0.id == editableClass.id }) {
                 editableClass = latest
+                originalName = latest.name
+            }
+            // Auto-transition to inactive if end date has passed
+            if let endDate = editableClass.endDate, Date() > endDate, editableClass.status == .active {
+                editableClass.status = .inactive
+                persistClass()
             }
         }
     }
@@ -137,10 +147,15 @@ struct ClassEditView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(editableClass.name)
+                    TextField("Class name", text: $editableClass.name)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
+                        .background(Color.clear)
+                        .onChange(of: editableClass.name) { _, _ in
+                            editableClass.hasUnsyncedChanges = true
+                            persistClass()
+                        }
 
                     if !editableClass.schedule.isEmpty {
                         HStack(spacing: 4) {
@@ -194,7 +209,7 @@ struct ClassEditView: View {
                 }
             }
 
-            // Color picker
+            // Color picker (no label — circle swatch speaks for itself)
             ColorPicker(selection: Binding(
                 get: { editableClass.color },
                 set: { newColor in
@@ -202,9 +217,58 @@ struct ClassEditView: View {
                     persistClass()
                 }
             ), supportsOpacity: false) {
-                Text("Color")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                EmptyView()
+            }
+            .frame(maxWidth: 40) // constrain to just the swatch
+
+            // End date row
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Text("End date")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Spacer()
+                    if let endDate = editableClass.endDate {
+                        Text(endDate.formatted(date: .abbreviated, time: .omitted))
+                            .font(.caption)
+                            .foregroundColor(.white)
+                        Button {
+                            editableClass.endDate = nil
+                            persistClass()
+                            showEndDatePicker = false
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    } else {
+                        Button("Set") {
+                            showEndDatePicker.toggle()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    }
+                }
+                if showEndDatePicker {
+                    DatePicker(
+                        "",
+                        selection: Binding(
+                            get: { editableClass.endDate ?? Calendar.current.date(byAdding: .month, value: 3, to: Date())! },
+                            set: { newDate in
+                                editableClass.endDate = newDate
+                                persistClass()
+                                showEndDatePicker = false
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .colorScheme(.dark)
+                    .labelsHidden()
+                }
             }
 
             // Last synced
@@ -361,11 +425,13 @@ struct ClassEditView: View {
         struct SyncRequestBody: Encodable {
             let className: String
             let googleCalendarId: String?
+            let renameCalendarTo: String?
             let events: [SyncEventBody]
 
             enum CodingKeys: String, CodingKey {
                 case className = "class_name"
                 case googleCalendarId = "google_calendar_id"
+                case renameCalendarTo = "rename_calendar_to"
                 case events
             }
         }
@@ -386,8 +452,9 @@ struct ClassEditView: View {
         }
 
         let body = SyncRequestBody(
-            className: editableClass.name,
+            className: originalName,
             googleCalendarId: editableClass.googleCalendarId,
+            renameCalendarTo: editableClass.name != originalName ? editableClass.name : nil,
             events: eventsToSync
         )
 
@@ -461,6 +528,7 @@ struct ClassEditView: View {
             editableClass.status = .active
         }
 
+        originalName = editableClass.name
         persistClass()
         showSyncSuccess = true
     }
