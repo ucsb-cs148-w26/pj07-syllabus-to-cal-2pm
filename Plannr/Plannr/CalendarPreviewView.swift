@@ -321,11 +321,15 @@ struct CalendarPreviewView: View {
             let className: String
             let googleCalendarId: String?
             let events: [SyncEventBody]
+            let backgroundColor: String?
+            let foregroundColor: String?
 
             enum CodingKeys: String, CodingKey {
                 case className = "class_name"
                 case googleCalendarId = "google_calendar_id"
                 case events
+                case backgroundColor = "background_color"
+                case foregroundColor = "foreground_color"
             }
         }
 
@@ -344,7 +348,9 @@ struct CalendarPreviewView: View {
         let body = SyncRequestBody(
             className: className,
             googleCalendarId: existingClass?.googleCalendarId,
-            events: eventBodies
+            events: eventBodies,
+            backgroundColor: existingClass?.colorHex.hasPrefix("#") ? existingClass?.colorHex : "#\(existingClass?.colorHex ?? "007AFF")",
+            foregroundColor: "#FFFFFF"  // White text for better contrast
         )
 
         var request = URLRequest(url: url)
