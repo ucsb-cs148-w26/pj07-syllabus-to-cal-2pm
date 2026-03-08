@@ -41,6 +41,7 @@ struct ClassEditView: View {
     @State private var isSyncing = false
     @State private var syncErrorMessage: String?
     @State private var showSyncError = false
+    @State private var showSyncSuccess = false
     @State private var navigateToUpload = false
 
     var onSyncComplete: (() -> Void)?
@@ -50,9 +51,13 @@ struct ClassEditView: View {
         self.onSyncComplete = onSyncComplete
     }
 
-    // Events visible in the list (exclude soft-deleted)
+    // All events shown in the list; soft-deleted ones are visually marked but kept until resync
     private var visibleEvents: [CalendarEvent] {
-        editableClass.events.filter { !$0.isDeletedLocally }
+        editableClass.events
+    }
+
+    private var activeEventCount: Int {
+        editableClass.events.filter { !$0.isDeletedLocally }.count
     }
 
     // Count of changes pending a re-sync
@@ -102,6 +107,8 @@ struct ClassEditView: View {
                     if let updated = classManager.classes.first(where: { $0.id == editableClass.id }) {
                         editableClass = updated
                     }
+                    // Pop SyllabusUploadView + CalendarPreviewView back to ClassEditView
+                    navigateToUpload = false
                 }
             )
             .environmentObject(classManager)
@@ -111,6 +118,11 @@ struct ClassEditView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(syncErrorMessage ?? "An unknown error occurred.")
+        }
+        .alert("Sync Successful", isPresented: $showSyncSuccess) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your changes have been synced to Google Calendar.")
         }
         .onAppear {
             // Refresh from classManager in case another view updated it
@@ -215,7 +227,7 @@ struct ClassEditView: View {
     private var eventsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Events (\(visibleEvents.count))")
+                Text("Events (\(activeEventCount))")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
@@ -233,7 +245,7 @@ struct ClassEditView: View {
                     ClassEventRow(event: event, classColor: editableClass.color) {
                         editingEvent = event
                     } onDelete: {
-                        softDeleteEvent(event)
+                        toggleDeleteEvent(event)
                     }
                     .padding(.horizontal)
                 }
@@ -309,10 +321,10 @@ struct ClassEditView: View {
         persistClass()
     }
 
-    private func softDeleteEvent(_ event: CalendarEvent) {
+    private func toggleDeleteEvent(_ event: CalendarEvent) {
         guard let idx = editableClass.events.firstIndex(where: { $0.id == event.id }) else { return }
-        editableClass.events[idx].isDeletedLocally = true
-        editableClass.hasUnsyncedChanges = true
+        editableClass.events[idx].isDeletedLocally.toggle()
+        editableClass.hasUnsyncedChanges = editableClass.events.contains { $0.isEdited || $0.isDeletedLocally }
         persistClass()
     }
 
@@ -523,6 +535,7 @@ struct ClassEditView: View {
         }
 
         persistClass()
+        showSyncSuccess = true
     }
 }
 
@@ -538,7 +551,7 @@ struct ClassEventRow: View {
         HStack(alignment: .top, spacing: 12) {
             // Color bar
             RoundedRectangle(cornerRadius: 2)
-                .fill(classColor)
+                .fill(event.isDeletedLocally ? Color.red : classColor)
                 .frame(width: 3)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -546,11 +559,21 @@ struct ClassEventRow: View {
                     Text(event.title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(event.isDeletedLocally ? .gray : .white)
+                        .strikethrough(event.isDeletedLocally, color: .gray)
 
                     Spacer()
 
-                    if event.isEdited {
+                    if event.isDeletedLocally {
+                        Text("QUEUED")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Color.red.opacity(0.2))
+                            .cornerRadius(6)
+                    } else if event.isEdited {
                         Text("EDITED")
                             .font(.caption2)
                             .fontWeight(.bold)
@@ -596,19 +619,22 @@ struct ClassEventRow: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.blue.opacity(0.6))
+                        .background(Color.blue.opacity(event.isDeletedLocally ? 0.2 : 0.6))
                         .cornerRadius(6)
                     }
+                    .disabled(event.isDeletedLocally)
 
                     Button(action: onDelete) {
                         HStack(spacing: 4) {
-                            Image(systemName: "trash").font(.caption2)
-                            Text("Delete").font(.caption2).fontWeight(.medium)
+                            Image(systemName: event.isDeletedLocally ? "arrow.uturn.backward" : "trash")
+                                .font(.caption2)
+                            Text(event.isDeletedLocally ? "Undo" : "Delete")
+                                .font(.caption2).fontWeight(.medium)
                         }
                         .foregroundColor(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.red.opacity(0.6))
+                        .background(event.isDeletedLocally ? Color.red : Color.red.opacity(0.6))
                         .cornerRadius(6)
                     }
                 }
@@ -616,7 +642,7 @@ struct ClassEventRow: View {
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.12))
+        .background(event.isDeletedLocally ? Color.red.opacity(0.08) : Color.gray.opacity(0.12))
         .cornerRadius(10)
     }
 }

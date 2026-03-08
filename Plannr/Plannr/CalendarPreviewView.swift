@@ -16,6 +16,7 @@ struct CalendarPreviewView: View {
     let classSchedule: String
     let classColor: Color
     let existingClassID: UUID
+    let eventsToDelete: [CalendarEvent]
     var onSyncComplete: (() -> Void)? = nil
 
     @State private var events: [CalendarEvent]
@@ -32,11 +33,12 @@ struct CalendarPreviewView: View {
     @State private var sharedEventColor: Color
     @State private var pendingSyncResponse: CalendarSyncResponse?
     
-    init(className: String, classSchedule: String, classColor: Color, existingClassID: UUID, events: [CalendarEvent], onSyncComplete: (() -> Void)? = nil) {
+    init(className: String, classSchedule: String, classColor: Color, existingClassID: UUID, events: [CalendarEvent], eventsToDelete: [CalendarEvent] = [], onSyncComplete: (() -> Void)? = nil) {
         self.className = className
         self.classSchedule = classSchedule
         self.classColor = classColor
         self.existingClassID = existingClassID
+        self.eventsToDelete = eventsToDelete
         self.onSyncComplete = onSyncComplete
         _events = State(initialValue: events)
         _sharedEventColor = State(initialValue: classColor)
@@ -345,10 +347,24 @@ struct CalendarPreviewView: View {
             )
         }
 
+        // Include old events that the new PDF replaced, so they're removed from GCal
+        let deleteBodies = eventsToDelete.compactMap { ev -> SyncEventBody? in
+            guard ev.googleEventId != nil else { return nil }
+            return SyncEventBody(
+                localId: ev.id.uuidString,
+                title: ev.title,
+                date: ev.date,
+                description: ev.description,
+                type: ev.type,
+                googleEventId: ev.googleEventId,
+                isDeleted: true
+            )
+        }
+
         let body = SyncRequestBody(
             className: className,
             googleCalendarId: existingClass?.googleCalendarId,
-            events: eventBodies,
+            events: eventBodies + deleteBodies,
             backgroundColor: (existingClass?.colorHex.hasPrefix("#") == true) ? existingClass?.colorHex : "#\(existingClass?.colorHex ?? "007AFF")",
             foregroundColor: "#FFFFFF"  // White text for better contrast
         )
