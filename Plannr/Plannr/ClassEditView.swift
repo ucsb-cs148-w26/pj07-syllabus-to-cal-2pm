@@ -5,6 +5,7 @@
 
 import SwiftUI
 
+
 // MARK: - Sync response models
 
 private struct ClassSyncResponse: Decodable {
@@ -200,6 +201,10 @@ struct ClassEditView: View {
                 set: { newColor in
                     editableClass.colorHex = newColor.toHex()
                     persistClass()
+                    // Sync color to Google Calendar immediately if class has been synced before
+                    if !authManager.isGuest && editableClass.googleCalendarId != nil {
+                        Task { await syncColorChange() }
+                    }
                 }
             ), supportsOpacity: false) {
                 Text("Color")
@@ -329,6 +334,68 @@ struct ClassEditView: View {
 
     // MARK: - Re-sync
 
+    private func syncColorChange() async {
+        guard let email = UserDefaults.standard.string(forKey: "userEmail"),
+              let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "\(BACKEND_URL)calendar/sync?email=\(encodedEmail)") else {
+            return
+        }
+
+        // Reuse existing SyncEventBody and SyncRequestBody structs for consistency
+        struct SyncEventBody: Encodable {
+            let localId: String
+            let title: String
+            let date: String
+            let description: String
+            let type: String
+            let googleEventId: String?
+            let isDeleted: Bool
+
+            enum CodingKeys: String, CodingKey {
+                case localId = "local_id"
+                case title, date, description, type
+                case googleEventId = "google_event_id"
+                case isDeleted = "is_deleted"
+            }
+        }
+
+        struct ColorSyncBody: Encodable {
+            let className: String
+            let googleCalendarId: String?
+            let events: [SyncEventBody] // Empty array for color-only sync
+            let backgroundColor: String?
+            let foregroundColor: String?
+
+            enum CodingKeys: String, CodingKey {
+                case className = "class_name"
+                case googleCalendarId = "google_calendar_id"
+                case events
+                case backgroundColor = "background_color" 
+                case foregroundColor = "foreground_color"
+            }
+        }
+
+        let body = ColorSyncBody(
+            className: editableClass.name,
+            googleCalendarId: editableClass.googleCalendarId,
+            events: [], // No event changes, just color
+            backgroundColor: editableClass.colorHex.hasPrefix("#") ? editableClass.colorHex : "#\(editableClass.colorHex)",
+            foregroundColor: "#FFFFFF"
+        )
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONEncoder().encode(body)
+            let (_, _) = try await URLSession.shared.data(for: request)
+            // Silent update - no need to show success/error for color changes
+        } catch {
+            // Silent failure for color sync
+        }
+    }
+
     private func resyncChanges() async {
         guard let email = UserDefaults.standard.string(forKey: "userEmail"),
               let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
@@ -362,11 +429,15 @@ struct ClassEditView: View {
             let className: String
             let googleCalendarId: String?
             let events: [SyncEventBody]
+            let backgroundColor: String?
+            let foregroundColor: String?
 
             enum CodingKeys: String, CodingKey {
                 case className = "class_name"
                 case googleCalendarId = "google_calendar_id"
                 case events
+                case backgroundColor = "background_color"
+                case foregroundColor = "foreground_color"
             }
         }
 
@@ -388,7 +459,9 @@ struct ClassEditView: View {
         let body = SyncRequestBody(
             className: editableClass.name,
             googleCalendarId: editableClass.googleCalendarId,
-            events: eventsToSync
+            events: eventsToSync,
+            backgroundColor: editableClass.colorHex.hasPrefix("#") ? editableClass.colorHex : "#\(editableClass.colorHex)",
+            foregroundColor: "#FFFFFF"  // White text for better contrast
         )
 
         var request = URLRequest(url: url)
