@@ -45,6 +45,8 @@ class CalendarClassSyncRequest(BaseModel):
     class_name: str
     google_calendar_id: Optional[str] = None
     events: List[SyncEventRequest]
+    background_color: Optional[str] = None  # Hex color for calendar background (e.g., "#FF5733")
+    foreground_color: Optional[str] = None  # Hex color for text (e.g., "#FFFFFF")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -259,7 +261,19 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
 async def parse_with_gemini(syllabus_text: str) -> dict:
     """Use Gemini to extract calendar events from syllabus text"""
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash-lite')
+        # Configure generation settings for more deterministic output
+        generation_config = genai.types.GenerationConfig(
+            temperature=0.1,  # Lower temperature for more consistent output
+            top_p=0.8,       # Nucleus sampling
+            top_k=40,        # Top-k sampling  
+            max_output_tokens=4096,  # Limit response length
+            response_mime_type="application/json"  # Force JSON output
+        )
+        
+        model = genai.GenerativeModel(
+            'gemini-2.5-flash-lite',
+            generation_config=generation_config
+        )
         
         prompt = f"""
         You are an AI assistant that parses university course syllabi into a structured list of **graded deliverables**. The user has provided the full syllabus text. Your job is to accurately extract **what is due**, **when it is due**, and **how it should be labeled**, using careful temporal and contextual reasoning.
@@ -281,7 +295,7 @@ You must infer the year using:
 - Contextual clues (file headers, footers, grading policies, references to holidays, finals week)
 - If a date is written without a year (e.g., “Jan 15”), infer the year from the academic term
 
- Do NOT assume the current calendar year - only assume current year if no other information is available 
+If no explicit or implicit year can be confidently inferred, you may assume the syllabus is for the year 2026.
  Do NOT reuse years from prior examples or memory  
  All dates must be consistent with the inferred academic year
 
@@ -492,15 +506,57 @@ async def add_to_calendar(email: str = Query(...), request: CalendarSyncRequest 
         )
 
 
-def _find_or_create_calendar(service, class_name: str) -> str:
-    """Find a secondary calendar by name, or create one. Returns the calendar ID."""
+def _find_or_create_calendar(service, class_name: str, background_color: Optional[str] = None, foreground_color: Optional[str] = None) -> str:
+    """Find a secondary calendar by name, or create one with custom colors. Returns the calendar ID."""
     calendar_list = service.calendarList().list().execute()
     for cal in calendar_list.get('items', []):
         if cal.get('summary') == class_name:
+            # If colors are provided and calendar exists, update colors
+            if background_color or foreground_color:
+                _set_calendar_colors(service, cal['id'], background_color, foreground_color)
             return cal['id']
+    
     # Not found — create a new secondary calendar
     new_cal = service.calendars().insert(body={'summary': class_name}).execute()
-    return new_cal['id']
+    calendar_id = new_cal['id']
+    
+    # Step 2: Set colors if provided (two-step process required by Google Calendar API)
+    if background_color or foreground_color:
+        _set_calendar_colors(service, calendar_id, background_color, foreground_color)
+    
+    return calendar_id
+
+
+def _set_calendar_colors(service, calendar_id: str, background_color: Optional[str] = None, foreground_color: Optional[str] = None) -> None:
+    """Set custom colors for a calendar using the calendarList PATCH endpoint."""
+    try:
+        # Build the color update body
+        color_body = {}
+        if background_color:
+            # Ensure hex color format
+            if not background_color.startswith('#'):
+                background_color = f"#{background_color}"
+            color_body['backgroundColor'] = background_color
+        
+        if foreground_color:
+            # Ensure hex color format
+            if not foreground_color.startswith('#'):
+                foreground_color = f"#{foreground_color}"
+            color_body['foregroundColor'] = foreground_color
+        
+        if color_body:
+            # PATCH the calendarList entry with colorRgbFormat=true to enable custom hex colors
+            service.calendarList().patch(
+                calendarId=calendar_id,
+                body=color_body,
+                colorRgbFormat=True  # Critical: enables custom hex colors
+            ).execute()
+            
+            print(f"Successfully set colors for calendar {calendar_id}: {color_body}")
+    except Exception as e:
+        print(f"Warning: Failed to set calendar colors: {e}")
+        # Don't fail the entire operation if color setting fails
+        pass
 
 
 def _build_google_event_body(event: SyncEventRequest) -> dict:
@@ -551,7 +607,7 @@ async def sync_class_calendar(email: str = Query(...), request: CalendarClassSyn
                 # Calendar was deleted externally — fall through to find-or-create
                 pass
         if not cal_id:
-            cal_id = _find_or_create_calendar(service, request.class_name)
+            cal_id = _find_or_create_calendar(service, request.class_name, request.background_color, request.foreground_color)
 
         # ── Step 2: incremental sync ──────────────────────────────────────────
         synced_events = []
