@@ -603,6 +603,9 @@ async def sync_class_calendar(email: str = Query(...), request: CalendarClassSyn
             try:
                 service.calendars().get(calendarId=request.google_calendar_id).execute()
                 cal_id = request.google_calendar_id
+                # Update colors for existing calendar if provided
+                if request.background_color or request.foreground_color:
+                    _set_calendar_colors(service, cal_id, request.background_color, request.foreground_color)
             except Exception:
                 # Calendar was deleted externally — fall through to find-or-create
                 pass
