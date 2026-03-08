@@ -307,21 +307,7 @@ struct ClassEditView: View {
 
     private var bottomButton: some View {
         Group {
-            if authManager.isGuest {
-                HStack(spacing: 8) {
-                    Image(systemName: "lock.fill")
-                    Text("Sign in to sync to Google Calendar")
-                        .font(.headline)
-                }
-                .foregroundColor(.white.opacity(0.5))
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.gray.opacity(0.3))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-                .background(Color.black)
-            } else if editableClass.hasUnsyncedChanges {
+            if !authManager.isGuest && editableClass.hasUnsyncedChanges {
                 Button(action: { Task { await resyncChanges() } }) {
                     HStack(spacing: 8) {
                         if isSyncing {
