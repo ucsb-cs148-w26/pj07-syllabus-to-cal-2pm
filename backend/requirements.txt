@@ -10,3 +10,5 @@ google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.2.0
 google-api-python-client>=2.0.0
 icalendar==6.1.3
+pdf2image==1.17.0
+pytesseract==0.3.13

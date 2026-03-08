@@ -144,6 +144,11 @@ The iOS app uses only native Apple frameworks (no third-party dependencies):
 - **pydantic** — request/response data validation
 - **icalendar** — iCalendar (.ics) file generation for the calendar export feature
 
+### System Dependencies (required for OCR / camera scanning)
+- **tesseract-ocr** — OCR engine for extracting text from scanned documents
+- **poppler-utils** — PDF rendering library required by pdf2image
+
+> These cannot be installed via pip. See Installation Steps for instructions.
 ## Installation Steps
 
 Choose one of the following methods to run the app.
@@ -193,13 +198,20 @@ pip install -r requirements.txt
 
 ```
 
+3. **Install system dependencies (required for camera scan OCR):**
+```bash
+# Ubuntu/Debian
+sudo apt-get install tesseract-ocr poppler-utils -y
 
-3. **Configure environment variables:**
+# macOS
+brew install tesseract poppler
+```
+
+4. **Configure environment variables:**
 ```bash
 cp .env.SAMPLE .env
 
 ```
-
 
 Edit `backend/.env` and fill in your credentials:
 * `GEMINI_API_KEY`: Your Google Gemini API key
@@ -208,14 +220,14 @@ Edit `backend/.env` and fill in your credentials:
 * `GOOGLE_REDIRECT_URI`: Set to `http://localhost:8000/auth/callback`
 
 
-4. **Start the backend server:**
+5. **Start the backend server:**
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 ```
 
 
-5. **Point the frontend to localhost:**
+6. **Point the frontend to localhost:**
 You must update the backend URL in **two** files to point to your local server instead of the live production server.
 
 **File 1**: `Plannr/Plannr/AuthManager.swift`
@@ -234,7 +246,7 @@ Find the `BACKEND_URL` constant and change it to localhost:
 let BACKEND_URL = "http://localhost:8000"
 
 ```
-6. **Run the iOS app:**
+7. **Run the iOS app:**
 Open `Plannr/Plannr.xcodeproj` and press `Cmd+R`.
 
 
