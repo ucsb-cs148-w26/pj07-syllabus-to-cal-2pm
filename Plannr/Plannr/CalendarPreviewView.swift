@@ -349,7 +349,7 @@ struct CalendarPreviewView: View {
             className: className,
             googleCalendarId: existingClass?.googleCalendarId,
             events: eventBodies,
-            backgroundColor: existingClass?.colorHex.hasPrefix("#") ? existingClass?.colorHex : "#\(existingClass?.colorHex ?? "007AFF")",
+            backgroundColor: (existingClass?.colorHex.hasPrefix("#") == true) ? existingClass?.colorHex : "#\(existingClass?.colorHex ?? "007AFF")",
             foregroundColor: "#FFFFFF"  // White text for better contrast
         )
 
