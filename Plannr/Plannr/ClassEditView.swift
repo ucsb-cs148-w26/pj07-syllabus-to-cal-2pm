@@ -351,7 +351,7 @@ struct ClassEditView: View {
                 Button(action: { navigateToUpload = true }) {
                     HStack(spacing: 8) {
                         Image(systemName: "arrow.up.doc.fill")
-                        Text("Upload New PDF")
+                        Text("Upload New Syllabus")
                             .font(.headline)
                     }
                     .foregroundColor(.white)

@@ -18,6 +18,8 @@ from database.db_manager import init_db, fetch_user_creds, update_creds
 import json
 from pydantic import BaseModel
 from typing import List, Optional
+from pdf2image import convert_from_bytes
+import pytesseract
 
 
 class CalendarEvent(BaseModel):
@@ -245,18 +247,47 @@ async def parse_syllabus(file: UploadFile = File(...)):
 
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    """Extract text from PDF bytes"""
+    """Extract text from PDF bytes. Falls back to OCR for scanned/image PDFs."""
     try:
         pdf_file = BytesIO(pdf_bytes)
         pdf_reader = PdfReader(pdf_file)
         text = ""
         for page in pdf_reader.pages:
-            text += page.extract_text()
-        return text
+            text += page.extract_text() or ""
+        
+        if text.strip():
+            print(f"PyPDF2 extracted {len(text)} characters")
+            return text
+        
+        print("No text found via PyPDF2, falling back to OCR...")
+        return extract_text_via_ocr(pdf_bytes)
+
     except Exception as e:
         print(f"Error extracting PDF text: {e}")
-        return ""
+        return extract_text_via_ocr(pdf_bytes)
 
+
+def extract_text_via_ocr(pdf_bytes: bytes) -> str:
+    """OCR fallback for scanned/image-based PDFs."""
+    try:
+        from pdf2image import convert_from_bytes
+        import pytesseract
+
+        images = convert_from_bytes(pdf_bytes, dpi=200)
+        print(f"OCR: converted PDF to {len(images)} image(s)")
+        
+        text = ""
+        for i, image in enumerate(images):
+            page_text = pytesseract.image_to_string(image)
+            print(f"OCR page {i+1}: {len(page_text)} characters")
+            text += page_text + "\n"
+        
+        print(f"OCR total: {len(text)} characters extracted")
+        return text
+
+    except Exception as e:
+        print(f"OCR failed: {e}")
+        return ""
 
 async def parse_with_gemini(syllabus_text: str) -> dict:
     """Use Gemini to extract calendar events from syllabus text"""
