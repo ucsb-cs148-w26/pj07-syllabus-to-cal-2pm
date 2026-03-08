@@ -119,10 +119,10 @@ struct ClassEditView: View {
         } message: {
             Text(syncErrorMessage ?? "An unknown error occurred.")
         }
-        .alert("Sync Successful", isPresented: $showSyncSuccess) {
+        .alert(authManager.isGuest ? "Changes Saved" : "Sync Successful", isPresented: $showSyncSuccess) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Your changes have been synced to Google Calendar.")
+            Text(authManager.isGuest ? "Your changes have been saved." : "Your changes have been synced to Google Calendar.")
         }
         .onAppear {
             // Refresh from classManager in case another view updated it
@@ -307,7 +307,23 @@ struct ClassEditView: View {
 
     private var bottomButton: some View {
         Group {
-            if !authManager.isGuest && editableClass.hasUnsyncedChanges {
+            if authManager.isGuest && editableClass.hasUnsyncedChanges {
+                Button(action: { saveLocally() }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("Save Changes")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                .background(Color.black)
+            } else if !authManager.isGuest && editableClass.hasUnsyncedChanges {
                 Button(action: { Task { await resyncChanges() } }) {
                     HStack(spacing: 8) {
                         if isSyncing {
@@ -366,6 +382,23 @@ struct ClassEditView: View {
 
     private func persistClass() {
         classManager.updateClass(editableClass)
+    }
+
+    // MARK: - Guest local save (no Google Calendar)
+
+    private func saveLocally() {
+        // Remove events the user queued for deletion
+        editableClass.events.removeAll { $0.isDeletedLocally }
+        // Clear edit flags
+        for i in editableClass.events.indices {
+            editableClass.events[i].isEdited = false
+        }
+        editableClass.hasUnsyncedChanges = false
+        if editableClass.status == .noSyllabus && !editableClass.events.isEmpty {
+            editableClass.status = .active
+        }
+        persistClass()
+        showSyncSuccess = true
     }
 
     // MARK: - Re-sync

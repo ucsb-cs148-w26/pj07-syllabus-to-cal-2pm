@@ -96,17 +96,18 @@ struct CalendarPreviewView: View {
 
                 // Sticky Sync button
                 if authManager.isGuest {
-                    HStack(spacing: 8) {
-                        Image(systemName: "lock.fill")
-                            .font(.subheadline)
-                        Text("Sign in to sync to Google Calendar")
-                            .font(.headline)
+                    Button(action: { saveGuestClass() }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Save Class")
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
                     }
-                    .foregroundColor(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.gray.opacity(0.3))
-                    .cornerRadius(12)
                     .padding(.horizontal)
                     .padding(.vertical, 12)
                     .background(Color.black)
@@ -275,6 +276,28 @@ struct CalendarPreviewView: View {
                     showExportError = true
                 }
             }
+        }
+    }
+
+    func saveGuestClass() {
+        let acceptedEvents = events.filter { $0.status == .accepted }
+        let existingColorHex = classManager.classes
+            .first(where: { $0.id == existingClassID })?.colorHex
+            ?? sharedEventColor.toHex()
+        classManager.removeClassByID(existingClassID)
+        classManager.addClass(Class(
+            id: existingClassID,
+            name: className,
+            schedule: classSchedule,
+            colorHex: existingColorHex,
+            events: acceptedEvents,
+            status: acceptedEvents.isEmpty ? .noSyllabus : .active,
+            googleCalendarId: nil,
+            lastSynced: nil,
+            hasUnsyncedChanges: false
+        ))
+        DispatchQueue.main.async {
+            onSyncComplete?()
         }
     }
 
