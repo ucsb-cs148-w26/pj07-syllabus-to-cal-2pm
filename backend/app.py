@@ -681,6 +681,32 @@ async def sync_class_calendar(email: str = Query(...), request: CalendarClassSyn
         return JSONResponse(status_code=400, content={"error": f"Sync failed: {str(e)}"})
 
 
+@app.delete('/calendar', tags=['Syllabus to Calendar'])
+async def delete_class_calendar(email: str = Query(...), google_calendar_id: str = Query(...)):
+    """Delete a secondary Google Calendar by its ID."""
+    try:
+        creds_json = fetch_user_creds(email)
+        if not creds_json:
+            return JSONResponse(status_code=401, content={"error": "User not authenticated."})
+
+        creds_data = json.loads(creds_json)
+        credentials = Credentials(
+            token=creds_data.get('token'),
+            refresh_token=creds_data.get('refresh_token'),
+            token_uri=creds_data.get('token_uri'),
+            client_id=creds_data.get('client_id'),
+            client_secret=creds_data.get('client_secret'),
+            scopes=creds_data.get('scopes')
+        )
+        service = build('calendar', 'v3', credentials=credentials)
+        service.calendars().delete(calendarId=google_calendar_id).execute()
+        return JSONResponse(status_code=200, content={"message": "Calendar deleted."})
+
+    except Exception as e:
+        print(f"Calendar delete error: {e}")
+        return JSONResponse(status_code=400, content={"error": f"Failed to delete calendar: {str(e)}"})
+
+
 @app.post('/export', tags=['Export'])
 async def export_events(
     email: str = Query(...),

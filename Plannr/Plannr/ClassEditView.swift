@@ -43,6 +43,7 @@ struct ClassEditView: View {
     @State private var showSyncError = false
     @State private var showSyncSuccess = false
     @State private var navigateToUpload = false
+    @State private var showEndDatePicker = false
 
     var onSyncComplete: (() -> Void)?
 
@@ -62,7 +63,7 @@ struct ClassEditView: View {
 
     // Count of changes pending a re-sync
     private var unsyncedCount: Int {
-        editableClass.events.filter { $0.isEdited || $0.isDeletedLocally || $0.googleEventId == nil }.count
+        editableClass.events.filter { $0.isEdited || $0.isDeletedLocally }.count
     }
 
     var body: some View {
@@ -119,15 +120,20 @@ struct ClassEditView: View {
         } message: {
             Text(syncErrorMessage ?? "An unknown error occurred.")
         }
-        .alert("Sync Successful", isPresented: $showSyncSuccess) {
+        .alert(authManager.isGuest ? "Changes Saved" : "Sync Successful", isPresented: $showSyncSuccess) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Your changes have been synced to Google Calendar.")
+            Text(authManager.isGuest ? "Your changes have been saved." : "Your changes have been synced to Google Calendar.")
         }
         .onAppear {
             // Refresh from classManager in case another view updated it
             if let latest = classManager.classes.first(where: { $0.id == editableClass.id }) {
                 editableClass = latest
+            }
+            // Auto-transition to inactive if end date has passed
+            if let endDate = editableClass.endDate, Date() > endDate, editableClass.status == .active {
+                editableClass.status = .inactive
+                persistClass()
             }
         }
     }
@@ -195,7 +201,7 @@ struct ClassEditView: View {
                 }
             }
 
-            // Color picker
+            // Color picker (no label — circle swatch speaks for itself)
             ColorPicker(selection: Binding(
                 get: { editableClass.color },
                 set: { newColor in
@@ -207,9 +213,58 @@ struct ClassEditView: View {
                     }
                 }
             ), supportsOpacity: false) {
-                Text("Color")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                EmptyView()
+            }
+            .frame(maxWidth: 40) // constrain to just the swatch
+
+            // End date row
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Text("End date")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Spacer()
+                    if let endDate = editableClass.endDate {
+                        Text(endDate.formatted(date: .abbreviated, time: .omitted))
+                            .font(.caption)
+                            .foregroundColor(.white)
+                        Button {
+                            editableClass.endDate = nil
+                            persistClass()
+                            showEndDatePicker = false
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    } else {
+                        Button("Set") {
+                            showEndDatePicker.toggle()
+                        }
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    }
+                }
+                if showEndDatePicker {
+                    DatePicker(
+                        "",
+                        selection: Binding(
+                            get: { editableClass.endDate ?? Calendar.current.date(byAdding: .month, value: 3, to: Date())! },
+                            set: { newDate in
+                                editableClass.endDate = newDate
+                                persistClass()
+                                showEndDatePicker = false
+                            }
+                        ),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .colorScheme(.dark)
+                    .labelsHidden()
+                }
             }
 
             // Last synced
@@ -257,27 +312,29 @@ struct ClassEditView: View {
 
     private var bottomButton: some View {
         Group {
-            if authManager.isGuest {
-                HStack(spacing: 8) {
-                    Image(systemName: "lock.fill")
-                    Text("Sign in to sync to Google Calendar")
-                        .font(.headline)
+            if authManager.isGuest && editableClass.hasUnsyncedChanges {
+                Button(action: { saveLocally() }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("Save Changes")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(12)
                 }
-                .foregroundColor(.white.opacity(0.5))
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.gray.opacity(0.3))
-                .cornerRadius(12)
                 .padding(.horizontal)
                 .padding(.vertical, 12)
                 .background(Color.black)
-            } else if editableClass.hasUnsyncedChanges {
+            } else if !authManager.isGuest && editableClass.hasUnsyncedChanges {
                 Button(action: { Task { await resyncChanges() } }) {
                     HStack(spacing: 8) {
                         if isSyncing {
                             ProgressView().tint(.white)
                         }
-                        Text(isSyncing ? "Syncing..." : "Re-sync (\(unsyncedCount)) Changes")
+                        Text(isSyncing ? "Syncing..." : "Re-sync (\(unsyncedCount)) \(unsyncedCount == 1 ? "Change" : "Changes")")
                             .font(.headline)
                             .foregroundColor(.white)
                     }
@@ -330,6 +387,23 @@ struct ClassEditView: View {
 
     private func persistClass() {
         classManager.updateClass(editableClass)
+    }
+
+    // MARK: - Guest local save (no Google Calendar)
+
+    private func saveLocally() {
+        // Remove events the user queued for deletion
+        editableClass.events.removeAll { $0.isDeletedLocally }
+        // Clear edit flags
+        for i in editableClass.events.indices {
+            editableClass.events[i].isEdited = false
+        }
+        editableClass.hasUnsyncedChanges = false
+        if editableClass.status == .noSyllabus && !editableClass.events.isEmpty {
+            editableClass.status = .active
+        }
+        persistClass()
+        showSyncSuccess = true
     }
 
     // MARK: - Re-sync
@@ -441,10 +515,16 @@ struct ClassEditView: View {
             }
         }
 
-        // Send all non-deleted events that need syncing + all deleted events
+        // Only send events that actually need action:
+        //   - New events (no Google ID, not deleted) → insert
+        //   - Edited events with a Google ID → update
+        //   - Locally-deleted events with a Google ID → delete in GCal
+        // Unchanged, already-synced events are intentionally skipped.
         let eventsToSync: [SyncEventBody] = editableClass.events.compactMap { ev in
-            // Skip events that are deleted locally without a google ID (never synced, just drop them)
-            if ev.isDeletedLocally && ev.googleEventId == nil { return nil }
+            let needsInsert  = ev.googleEventId == nil && !ev.isDeletedLocally
+            let needsUpdate  = ev.isEdited && ev.googleEventId != nil
+            let needsDelete  = ev.isDeletedLocally && ev.googleEventId != nil
+            guard needsInsert || needsUpdate || needsDelete else { return nil }
             return SyncEventBody(
                 localId: ev.id.uuidString,
                 title: ev.title,

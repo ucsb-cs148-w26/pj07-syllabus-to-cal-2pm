@@ -103,6 +103,7 @@ struct PDFUploadView: View {
                                         NavigationLink(value: classItem) {
                                             ClassCard(classItem: classItem)
                                                 .environmentObject(classManager)
+                                                .environmentObject(authManager)
                                         }
                                         .buttonStyle(.plain)
                                         .padding(.horizontal)
@@ -240,6 +241,7 @@ struct ProfileSheetView: View {
 struct ClassCard: View {
     let classItem: Class
     @EnvironmentObject var classManager: ClassManager
+    @EnvironmentObject var authManager: AuthManager
     @State private var showDeleteConfirmation = false
     
     var body: some View {
@@ -341,10 +343,25 @@ struct ClassCard: View {
             titleVisibility: .visible
         ) {
             Button("Delete", role: .destructive) {
-                classManager.removeClass(classItem)
+                Task { await deleteClass() }
             }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    private func deleteClass() async {
+        // Delete the secondary Google Calendar first (best-effort; local delete proceeds regardless)
+        if let calId = classItem.googleCalendarId,
+           !authManager.isGuest,
+           let email = UserDefaults.standard.string(forKey: "userEmail"),
+           let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let encodedCalId = calId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+           let url = URL(string: "\(BACKEND_URL)calendar?email=\(encodedEmail)&google_calendar_id=\(encodedCalId)") {
+            var request = URLRequest(url: url)
+            request.httpMethod = "DELETE"
+            _ = try? await URLSession.shared.data(for: request)
+        }
+        classManager.removeClass(classItem)
     }
 }
 
