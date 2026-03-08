@@ -204,7 +204,12 @@ struct CalendarPreviewView: View {
             Button("Export as .csv (Spreadsheet)") { exportEvents(format: "csv") }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Choose a format to download your events.")
+            let acceptedCount = events.filter { $0.status == .accepted }.count
+            if acceptedCount == 0 {
+                Text("No accepted events to export. Accept events first.")
+            } else {
+                Text("\(acceptedCount) accepted event\(acceptedCount == 1 ? "" : "s") will be exported.")
+            }
         }
         .sheet(item: $exportItem) { item in
             ActivityViewController(activityItems: [item.url])
@@ -225,8 +230,6 @@ struct CalendarPreviewView: View {
             return
         }
 
-        isExporting = true
-
         struct ExportRequestBody: Encodable {
             let events: [CalendarEvent]
         }
@@ -235,8 +238,17 @@ struct CalendarPreviewView: View {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
+        let acceptedEvents = events.filter { $0.status == .accepted }
+        guard !acceptedEvents.isEmpty else {
+            exportErrorMessage = "No accepted events to export. Please accept at least one event before exporting."
+            showExportError = true
+            return
+        }
+
+        isExporting = true
+
         do {
-            request.httpBody = try JSONEncoder().encode(ExportRequestBody(events: events))
+            request.httpBody = try JSONEncoder().encode(ExportRequestBody(events: acceptedEvents))
         } catch {
             isExporting = false
             exportErrorMessage = "Failed to encode events."
