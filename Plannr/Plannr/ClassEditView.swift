@@ -43,14 +43,11 @@ struct ClassEditView: View {
     @State private var showSyncSuccess = false
     @State private var navigateToUpload = false
     @State private var showEndDatePicker = false
-    // Tracks the name last synced to Google Calendar; used to detect renames
-    @State private var originalName: String
 
     var onSyncComplete: (() -> Void)?
 
     init(cls: Class, onSyncComplete: (() -> Void)? = nil) {
         _editableClass = State(initialValue: cls)
-        _originalName = State(initialValue: cls.name)
         self.onSyncComplete = onSyncComplete
     }
 
@@ -65,7 +62,7 @@ struct ClassEditView: View {
 
     // Count of changes pending a re-sync
     private var unsyncedCount: Int {
-        editableClass.events.filter { $0.isEdited || $0.isDeletedLocally || $0.googleEventId == nil }.count
+        editableClass.events.filter { $0.isEdited || $0.isDeletedLocally }.count
     }
 
     var body: some View {
@@ -131,7 +128,6 @@ struct ClassEditView: View {
             // Refresh from classManager in case another view updated it
             if let latest = classManager.classes.first(where: { $0.id == editableClass.id }) {
                 editableClass = latest
-                originalName = latest.name
             }
             // Auto-transition to inactive if end date has passed
             if let endDate = editableClass.endDate, Date() > endDate, editableClass.status == .active {
@@ -147,15 +143,10 @@ struct ClassEditView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    TextField("Class name", text: $editableClass.name)
+                    Text(editableClass.name)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-                        .background(Color.clear)
-                        .onChange(of: editableClass.name) { _, _ in
-                            editableClass.hasUnsyncedChanges = true
-                            persistClass()
-                        }
 
                     if !editableClass.schedule.isEmpty {
                         HStack(spacing: 4) {
@@ -336,7 +327,7 @@ struct ClassEditView: View {
                         if isSyncing {
                             ProgressView().tint(.white)
                         }
-                        Text(isSyncing ? "Syncing..." : "Re-sync (\(unsyncedCount)) Changes")
+                        Text(isSyncing ? "Syncing..." : "Re-sync (\(unsyncedCount)) \(unsyncedCount == 1 ? "Change" : "Changes")")
                             .font(.headline)
                             .foregroundColor(.white)
                     }
@@ -425,21 +416,25 @@ struct ClassEditView: View {
         struct SyncRequestBody: Encodable {
             let className: String
             let googleCalendarId: String?
-            let renameCalendarTo: String?
             let events: [SyncEventBody]
 
             enum CodingKeys: String, CodingKey {
                 case className = "class_name"
                 case googleCalendarId = "google_calendar_id"
-                case renameCalendarTo = "rename_calendar_to"
                 case events
             }
         }
 
-        // Send all non-deleted events that need syncing + all deleted events
+        // Only send events that actually need action:
+        //   - New events (no Google ID, not deleted) → insert
+        //   - Edited events with a Google ID → update
+        //   - Locally-deleted events with a Google ID → delete in GCal
+        // Unchanged, already-synced events are intentionally skipped.
         let eventsToSync: [SyncEventBody] = editableClass.events.compactMap { ev in
-            // Skip events that are deleted locally without a google ID (never synced, just drop them)
-            if ev.isDeletedLocally && ev.googleEventId == nil { return nil }
+            let needsInsert  = ev.googleEventId == nil && !ev.isDeletedLocally
+            let needsUpdate  = ev.isEdited && ev.googleEventId != nil
+            let needsDelete  = ev.isDeletedLocally && ev.googleEventId != nil
+            guard needsInsert || needsUpdate || needsDelete else { return nil }
             return SyncEventBody(
                 localId: ev.id.uuidString,
                 title: ev.title,
@@ -452,9 +447,8 @@ struct ClassEditView: View {
         }
 
         let body = SyncRequestBody(
-            className: originalName,
+            className: editableClass.name,
             googleCalendarId: editableClass.googleCalendarId,
-            renameCalendarTo: editableClass.name != originalName ? editableClass.name : nil,
             events: eventsToSync
         )
 
@@ -528,7 +522,6 @@ struct ClassEditView: View {
             editableClass.status = .active
         }
 
-        originalName = editableClass.name
         persistClass()
         showSyncSuccess = true
     }
