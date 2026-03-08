@@ -373,7 +373,7 @@ struct SyllabusUploadView: View {
             do {
                 let data = try Data(contentsOf: url)
                 
-                var request = URLRequest(url: URL(string: "\(BACKEND_URL)/syllabus")!)
+                var request = URLRequest(url: URL(string: "\(BACKEND_URL)syllabus")!)
                 request.httpMethod = "POST"
                 
                 let boundary = UUID().uuidString
@@ -517,11 +517,9 @@ struct DocumentScanner: UIViewControllerRepresentable {
             for i in 0..<scan.pageCount {
                 images.append(scan.imageOfPage(at: i))
             }
-
-            controller.dismiss(animated: true)
             onScanComplete(images)
+            controller.dismiss(animated: true)
         }
-
         func documentCameraViewControllerDidCancel(
             _ controller: VNDocumentCameraViewController
         ) {
