@@ -156,9 +156,12 @@ struct CalendarPreviewView: View {
                             acceptedEvents[i].googleEventId = idMap[acceptedEvents[i].id.uuidString]
                         }
                         // Fetch existing class to preserve its id-based identity
+                        let existingClass = classManager.classes.first(where: { $0.id == existingClassID })
                         let existingColorHex = classManager.classes
                             .first(where: { $0.id == existingClassID })?.colorHex
                             ?? sharedEventColor.toHex()
+                        let existingSyncHistory = existingClass?.syncHistory ?? []
+                        
                         classManager.removeClassByID(existingClassID)
                         classManager.addClass(Class(
                             id: existingClassID,
@@ -169,6 +172,7 @@ struct CalendarPreviewView: View {
                             status: .active,
                             googleCalendarId: syncResp.googleCalendarId,
                             lastSynced: Date(),
+                            syncHistory: existingSyncHistory + [SyncSession(events: acceptedEvents)],
                             hasUnsyncedChanges: false
                         ))
                         pendingSyncResponse = nil
