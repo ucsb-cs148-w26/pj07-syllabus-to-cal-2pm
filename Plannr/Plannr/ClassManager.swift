@@ -14,6 +14,18 @@ enum ClassStatus: String, Codable {
     case inactive   = "INACTIVE"
 }
 
+struct SyncSession: Identifiable, Codable {
+    let id: UUID
+    let date: Date
+    let events: [CalendarEvent]
+
+    init(date: Date = Date(), events: [CalendarEvent]) {
+        self.id = UUID()
+        self.date = date
+        self.events = events
+    }
+}
+
 class ClassManager: ObservableObject {
     @Published var classes: [Class] = []
 
@@ -74,6 +86,7 @@ struct Class: Identifiable, Codable, Hashable {
             && lhs.status == rhs.status
             && lhs.hasUnsyncedChanges == rhs.hasUnsyncedChanges
             && lhs.events.count == rhs.events.count
+            && lhs.syncHistory.count == rhs.syncHistory.count
     }
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
@@ -90,6 +103,7 @@ struct Class: Identifiable, Codable, Hashable {
     var lastSynced: Date?
     var endDate: Date?
     var hasUnsyncedChanges: Bool
+    var syncHistory: [SyncSession]
 
     var color: Color {
         get { Color(hex: colorHex) }
@@ -97,7 +111,7 @@ struct Class: Identifiable, Codable, Hashable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, schedule, colorHex, events, status, googleCalendarId, lastSynced, endDate, hasUnsyncedChanges
+        case id, name, schedule, colorHex, events, status, googleCalendarId, lastSynced, endDate, hasUnsyncedChanges, syncHistory
     }
 
     init(
@@ -109,6 +123,7 @@ struct Class: Identifiable, Codable, Hashable {
         googleCalendarId: String? = nil,
         lastSynced: Date? = nil,
         endDate: Date? = nil,
+        syncHistory: [SyncSession] = [],
         hasUnsyncedChanges: Bool = false
     ) {
         self.id = UUID()
@@ -120,6 +135,7 @@ struct Class: Identifiable, Codable, Hashable {
         self.googleCalendarId = googleCalendarId
         self.lastSynced = lastSynced
         self.endDate = endDate
+        self.syncHistory = syncHistory
         self.hasUnsyncedChanges = hasUnsyncedChanges
     }
 
@@ -133,6 +149,7 @@ struct Class: Identifiable, Codable, Hashable {
         googleCalendarId: String? = nil,
         lastSynced: Date? = nil,
         endDate: Date? = nil,
+        syncHistory: [SyncSession] = [],
         hasUnsyncedChanges: Bool = false
     ) {
         self.id = id
@@ -144,6 +161,7 @@ struct Class: Identifiable, Codable, Hashable {
         self.googleCalendarId = googleCalendarId
         self.lastSynced = lastSynced
         self.endDate = endDate
+        self.syncHistory = syncHistory
         self.hasUnsyncedChanges = hasUnsyncedChanges
     }
 
@@ -158,6 +176,7 @@ struct Class: Identifiable, Codable, Hashable {
         googleCalendarId = try container.decodeIfPresent(String.self, forKey: .googleCalendarId)
         lastSynced = try container.decodeIfPresent(Date.self, forKey: .lastSynced)
         endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
+        syncHistory = try container.decodeIfPresent([SyncSession].self, forKey: .syncHistory) ?? []
         hasUnsyncedChanges = try container.decodeIfPresent(Bool.self, forKey: .hasUnsyncedChanges) ?? false
     }
 }

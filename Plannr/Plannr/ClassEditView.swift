@@ -44,6 +44,7 @@ struct ClassEditView: View {
     @State private var showSyncSuccess = false
     @State private var navigateToUpload = false
     @State private var showEndDatePicker = false
+    @State private var showSyncSessions = false
 
     var onSyncComplete: (() -> Void)?
 
@@ -95,6 +96,9 @@ struct ClassEditView: View {
                 applyEventEdit(updatedEvent)
                 editingEvent = nil
             }
+        }
+        .navigationDestination(isPresented: $showSyncSessions) {
+            SyncSessionsView(sessions: editableClass.syncHistory)
         }
         .navigationDestination(isPresented: $navigateToUpload) {
             SyllabusUploadView(
@@ -287,6 +291,20 @@ struct ClassEditView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                 Spacer()
+                if !editableClass.syncHistory.isEmpty {
+                    Button {
+                        showSyncSessions = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.caption)
+                            Text("View Sync Sessions")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.blue)
+                    }
+                }
             }
             .padding(.horizontal)
 
@@ -384,7 +402,7 @@ struct ClassEditView: View {
         editableClass.hasUnsyncedChanges = editableClass.events.contains { $0.isEdited || $0.isDeletedLocally }
         persistClass()
     }
-
+    
     private func persistClass() {
         classManager.updateClass(editableClass)
     }
@@ -613,6 +631,8 @@ struct ClassEditView: View {
         if editableClass.status == .noSyllabus {
             editableClass.status = .active
         }
+        
+        editableClass.syncHistory.append(SyncSession(events: editableClass.events))
 
         persistClass()
         showSyncSuccess = true
