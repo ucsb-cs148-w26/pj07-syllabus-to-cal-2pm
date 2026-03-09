@@ -313,7 +313,7 @@ struct CalendarPreviewView: View {
 
         guard let email = UserDefaults.standard.string(forKey: "userEmail"),
               let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "\(BACKEND_URL)calendar/sync?email=\(encodedEmail)") else {
+              let syncURL = URL(string: "\(BACKEND_URL)calendar/sync?email=\(encodedEmail)") else {
             syncMessage = "Could not determine your account email. Please sign in again."
             syncSuccess = false
             showSyncAlert = true
@@ -322,8 +322,8 @@ struct CalendarPreviewView: View {
 
         isSyncing = true
 
-        // Fetch existing class so we can pass its google_calendar_id (if any)
         let existingClass = classManager.classes.first(where: { $0.id == existingClassID })
+        let oldCalendarId = existingClass?.googleCalendarId
 
         struct SyncEventBody: Encodable {
             let localId: String
@@ -358,6 +358,7 @@ struct CalendarPreviewView: View {
             }
         }
 
+        // Send only accepted events — no googleEventId needed since we're recreating the calendar
         let eventBodies = acceptedEvents.map { ev in
             SyncEventBody(
                 localId: ev.id.uuidString,
@@ -365,39 +366,26 @@ struct CalendarPreviewView: View {
                 date: ev.date,
                 description: ev.description,
                 type: ev.type,
-                googleEventId: ev.googleEventId,
+                googleEventId: nil,
                 isDeleted: false
             )
         }
 
-        // Include old events that the new PDF replaced, so they're removed from GCal
-        let deleteBodies = eventsToDelete.compactMap { ev -> SyncEventBody? in
-            guard ev.googleEventId != nil else { return nil }
-            return SyncEventBody(
-                localId: ev.id.uuidString,
-                title: ev.title,
-                date: ev.date,
-                description: ev.description,
-                type: ev.type,
-                googleEventId: ev.googleEventId,
-                isDeleted: true
-            )
-        }
-
+        // Pass nil so the backend creates a fresh calendar
         let body = SyncRequestBody(
             className: className,
-            googleCalendarId: existingClass?.googleCalendarId,
-            events: eventBodies + deleteBodies,
+            googleCalendarId: nil,
+            events: eventBodies,
             backgroundColor: (existingClass?.colorHex.hasPrefix("#") == true) ? existingClass?.colorHex : "#\(existingClass?.colorHex ?? "007AFF")",
-            foregroundColor: "#FFFFFF"  // White text for better contrast
+            foregroundColor: "#FFFFFF"
         )
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        var syncRequest = URLRequest(url: syncURL)
+        syncRequest.httpMethod = "POST"
+        syncRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         do {
-            request.httpBody = try JSONEncoder().encode(body)
+            syncRequest.httpBody = try JSONEncoder().encode(body)
         } catch {
             isSyncing = false
             syncMessage = "Failed to encode events."
@@ -407,15 +395,23 @@ struct CalendarPreviewView: View {
         }
 
         Task {
+            // Delete the old calendar first so we start fresh
+            if let calId = oldCalendarId,
+               let encodedCalId = calId.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+               let deleteURL = URL(string: "\(BACKEND_URL)calendar?email=\(encodedEmail)&google_calendar_id=\(encodedCalId)") {
+                var deleteRequest = URLRequest(url: deleteURL)
+                deleteRequest.httpMethod = "DELETE"
+                _ = try? await URLSession.shared.data(for: deleteRequest)
+            }
+
             do {
-                let (data, response) = try await URLSession.shared.data(for: request)
+                let (data, response) = try await URLSession.shared.data(for: syncRequest)
                 await MainActor.run {
                     isSyncing = false
                     if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
                        let syncResp = try? JSONDecoder().decode(CalendarSyncResponse.self, from: data) {
                         syncMessage = "Successfully synced \(acceptedEvents.count) events!"
                         syncSuccess = true
-                        // Store google IDs and calendar ID so the alert handler can use them
                         pendingSyncResponse = syncResp
                     } else if let errBody = try? JSONDecoder().decode([String: String].self, from: data),
                               let errorMsg = errBody["error"] ?? errBody["detail"] {

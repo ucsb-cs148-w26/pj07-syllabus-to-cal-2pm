@@ -317,8 +317,8 @@ struct SyllabusUploadView: View {
     /// - Only in new parse → add as new event.
     /// - Only in existing (no match) → returned in toDelete for removal from Google Calendar.
     /// Returns (result: merged events, toDelete: old events to remove from GCal).
-    func reconcileEvents(parsed: [CalendarEvent], existing: [CalendarEvent]) -> ([CalendarEvent], [CalendarEvent]) {
-        guard !existing.isEmpty else { return (parsed, []) }
+    func reconcileEvents(parsed: [CalendarEvent], existing: [CalendarEvent]) -> [CalendarEvent] {
+        guard !existing.isEmpty else { return parsed }
 
         func matchKey(_ ev: CalendarEvent) -> String {
             ev.title.lowercased().trimmingCharacters(in: .whitespaces) + "_" + ev.date
@@ -330,33 +330,18 @@ struct SyllabusUploadView: View {
         }
 
         var result: [CalendarEvent] = []
-        var matchedKeys = Set<String>()
 
         for var parsedEv in parsed {
             let key = matchKey(parsedEv)
-            if let existingEv = existingByKey[key] {
-                matchedKeys.insert(key)
-                if existingEv.isEdited {
-                    // Preserve local edits
-                    result.append(existingEv)
-                } else {
-                    // Use fresh parse but carry over the Google event ID
-                    parsedEv.googleEventId = existingEv.googleEventId
-                    result.append(parsedEv)
-                }
+            if let existingEv = existingByKey[key], existingEv.isEdited {
+                // Preserve local edits
+                result.append(existingEv)
             } else {
                 result.append(parsedEv)
             }
         }
 
-        // Collect unmatched existing events with a Google event ID for remote deletion
-        let toDelete = existing.filter {
-            !$0.isDeletedLocally
-                && !matchedKeys.contains(matchKey($0))
-                && $0.googleEventId != nil
-        }
-
-        return (result, toDelete)
+        return result
     }
 
     // MARK: - Upload PDF
@@ -414,13 +399,11 @@ struct SyllabusUploadView: View {
                             let acceptedParsed = jsonResponse.events.map { ev -> CalendarEvent in
                                 var e = ev; e.status = .accepted; return e
                             }
-                            // Reconcile with existing events; new PDF replaces old events
-                            let (reconciled, toDelete) = self.reconcileEvents(
+                            // Reconcile with existing events (preserves local edits)
+                            self.parsedEvents = self.reconcileEvents(
                                 parsed: acceptedParsed,
                                 existing: self.existingEvents
                             )
-                            self.parsedEvents = reconciled
-                            self.eventsToDelete = toDelete
                             self.isUploading = false
                             self.navigateToPreview = true
                         }
