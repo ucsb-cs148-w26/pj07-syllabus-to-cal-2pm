@@ -10,7 +10,7 @@ import SwiftUI
 let BACKEND_URL = "https://cs148.misc.iamjiamingliu.com/cs148api/"
 
 enum AppTab {
-    case myClasses, calendar
+    case myClasses, calendar, weeklyDashboard
 }
 
 struct PDFUploadView: View {
@@ -23,6 +23,11 @@ struct PDFUploadView: View {
 
     init(isGuest: Bool = false) {
         _classManager = StateObject(wrappedValue: ClassManager(isGuest: isGuest))
+    }
+    
+    // Computed property to determine default tab based on whether user has classes
+    private var defaultTab: AppTab {
+        return classManager.classes.isEmpty ? .myClasses : .weeklyDashboard
     }
 
     var body: some View {
@@ -56,13 +61,16 @@ struct PDFUploadView: View {
                             Button(action: { selectedTab = .calendar }) {
                                 Label("Calendar", systemImage: "calendar")
                             }
+                            Button(action: { selectedTab = .weeklyDashboard }) {
+                                Label("Week at a Glance", systemImage: "chart.bar.doc.horizontal")
+                            }
                         } label: {
                             Image(systemName: "line.3.horizontal")
                                 .font(.title2)
                                 .foregroundColor(.white)
                         }
 
-                        Text(selectedTab == .myClasses ? "My Classes" : "Calendar")
+                        Text(selectedTab == .myClasses ? "My Classes" : selectedTab == .calendar ? "Calendar" : "Week at a Glance")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
@@ -130,10 +138,19 @@ struct PDFUploadView: View {
                             }
                             .padding(.bottom, 40)
                         }
-                    } else {
+                    } else if selectedTab == .calendar {
                         UnifiedCalendarView()
                             .environmentObject(classManager)
+                    } else if selectedTab == .weeklyDashboard {
+                        WeeklyDashboardView()
+                            .environmentObject(classManager)
                     }
+                }
+            }
+            .onAppear {
+                // Set default tab when view appears
+                if selectedTab == .myClasses {
+                    selectedTab = defaultTab
                 }
             }
             .navigationDestination(for: Class.self) { cls in
@@ -387,6 +404,7 @@ struct CalendarEvent: Codable, Identifiable {
     var status: EventStatus = .pending
     var isSyllabus: Bool = true
     var isEdited: Bool = false
+    var isTaskCompleted: Bool = false
     var googleEventId: String? = nil
     var isDeletedLocally: Bool = false
 
@@ -396,7 +414,7 @@ struct CalendarEvent: Codable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, date, type, description, colorHex, status, isSyllabus, isEdited, googleEventId, isDeletedLocally
+        case id, title, date, type, description, colorHex, status, isSyllabus, isEdited, isTaskCompleted, googleEventId, isDeletedLocally
     }
 
     init(title: String, date: String, type: String, description: String) {
@@ -418,6 +436,7 @@ struct CalendarEvent: Codable, Identifiable {
         status = try container.decodeIfPresent(EventStatus.self, forKey: .status) ?? .pending
         isSyllabus = try container.decodeIfPresent(Bool.self, forKey: .isSyllabus) ?? true
         isEdited = try container.decodeIfPresent(Bool.self, forKey: .isEdited) ?? false
+        isTaskCompleted = try container.decodeIfPresent(Bool.self, forKey: .isTaskCompleted) ?? false
         googleEventId = try container.decodeIfPresent(String.self, forKey: .googleEventId)
         isDeletedLocally = try container.decodeIfPresent(Bool.self, forKey: .isDeletedLocally) ?? false
     }
