@@ -302,7 +302,7 @@ async def parse_with_gemini(syllabus_text: str) -> dict:
         )
         
         model = genai.GenerativeModel(
-            'gemini-2.5-flash-lite',
+            'gemini-2.5-flash',
             generation_config=generation_config
         )
         
@@ -321,14 +321,12 @@ Before extracting any events, you must infer:
 - **Academic year** (e.g., 2024–2025, 2025–2026)
 - **Quarter** (Fall, Winter, or Spring)
 
-You must infer the year using:
-- Explicit years or date ranges in the syllabus (e.g., “Winter 2025”, “Spring Quarter 2024”)
-- Contextual clues (file headers, footers, grading policies, references to holidays, finals week)
-- If a date is written without a year (e.g., “Jan 15”), infer the year from the academic term
+You must infer the year from:
+- Explicit years in syllabus ("Winter 2025", "Spring 2024")  
+- Headers/footers with year info
+- Default to 2026 if no year found
 
-If no explicit or implicit year can be confidently inferred, you may assume the syllabus is for the year 2026.
- Do NOT reuse years from prior examples or memory  
- All dates must be consistent with the inferred academic year
+Academic year consistency is critical - all dates must use the same year.
 
 ---
 
@@ -355,7 +353,18 @@ If not explicitly stated:
 
 ## Step 3: Temporal Reasoning Rules (CRITICAL)
 
-You must resolve dates even when they are **implicit or relative**.
+You must resolve dates using simple, clear rules:
+
+**Week Calculations:**
+- Find "Week 1" start in syllabus or assume first Monday of quarter
+- Week N = Start + (N-1) weeks
+- "Week 3 Friday" = Friday of third week
+
+**Common Patterns:**
+- "Every Monday" = all Mondays in quarter
+- "Finals Week" = standard finals period  
+- "Mid-February" = Feb 15th
+- Specific dates like "Dec 12" = add year (2026)
 
 Examples:
 - “Homework due at the end of lecture each week”
@@ -364,18 +373,7 @@ Examples:
 - “Assignments due weekly”
 - “Final exam during finals week”
 
-Rules:
-- Understand the **lecture and section schedule**, but **DO NOT output lectures or sections**
-- Use lecture timing ONLY to infer due dates
-- “End of lecture” → last lecture day of that week
-- “End of section/lab” → the scheduled section or lab day for that week
-- Finals week → use the university-standard finals window for the inferred quarter
-- If an assignment is described as “weekly” or “every week”, assign it to the corresponding day each week (e.g., every Friday)
-- For assignments with vague deadlines (e.g., “due next month”), use the **last instructional day of that month**
-
-If a due date cannot be inferred with reasonable confidence, **omit the event** rather than guessing.
-
----
+If you can't calculate a date confidently, skip that event.
 
 ## Step 4: What to Extract
 
