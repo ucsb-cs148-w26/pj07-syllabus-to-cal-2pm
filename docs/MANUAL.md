@@ -12,26 +12,63 @@ Plannr is built for students who want to stay organized without spending hours s
 
 ### **Features**
 
+#### Sign In / Guest Mode
+
+Users can sign in with their Google account to enable full calendar sync and persistent data storage. A Guest Mode is also available for users who want to try the app without signing in; events in guest mode are not saved between sessions.
+
+**[ADD IMAGE HERE]**
+
 #### Add Classes
 
-Users can add multiple classes/syllabi and view their class list on the home page.
+Users can add multiple classes and view their full class list on the home page. Each class can be assigned a custom color for easy visual identification across the calendar.
 
 **[ADD IMAGE HERE]**
 
 #### Upload Syllabi
 
-Users can upload their syllabi in multiple ways, including PDF upload, camera scan, and text upload. 
+Users can upload their syllabi in four ways: PDF file upload, camera document scanning (with OCR for scanned pages), photo library import, or manual text paste. All methods convert the input into a format ready for AI processing.
 
 **[ADD IMAGE HERE]**
 
-#### Edit Calendar Events
+#### AI-Powered Event Extraction
+
+Once a syllabus is uploaded, Plannr uses Google Gemini to intelligently parse the document and extract key academic dates. Events are automatically classified by type (homework, exam, quiz, lab, or other) and resolved to specific calendar dates, including relative references like "Week 3 Friday" or "Finals Week."
 
 **[ADD IMAGE HERE]**
 
 #### Preview Calendar
 
+Before syncing, users can review all extracted events in a calendar preview. Events can be edited (title, date, time, description) or removed before they are added to Google Calendar.
+
 **[ADD IMAGE HERE]**
 
+#### Edit Calendar Events
+
+Users can edit any event after it has been parsed or synced. Changes made locally are preserved when re-uploading an updated syllabus, thanks to automatic event reconciliation.
+
+**[ADD IMAGE HERE]**
+
+#### Calendar View
+
+Plannr provides a monthly grid calendar showing all events from every class, color-coded by class for quick identification. Events can be filtered by type (homework, exam, quiz, lab, or all).
+
+**[ADD IMAGE HERE]**
+
+#### Week at a Glance
+
+The Week at a Glance view gives users a focused look at their upcoming week, surfacing all deadlines and events across classes in a single compact view. This makes it easy to anticipate heavy workload periods and plan accordingly.
+
+**[ADD IMAGE HERE]**
 
 #### Sync to Google Calendar
+
+Users can push all parsed events to their Google Calendar with one tap. Plannr creates a dedicated secondary calendar for each class with a matching color. Re-syncing handles updates and deletions automatically.
+
+**[ADD IMAGE HERE]**
+
+#### Export Events
+
+Events can be exported as an iCal (.ics) file compatible with most calendar apps, or as a CSV spreadsheet for use in other tools.
+
+**[ADD IMAGE HERE]**
 
