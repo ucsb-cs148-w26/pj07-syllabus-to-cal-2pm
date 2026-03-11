@@ -144,4 +144,25 @@ Open `Plannr/Plannr.xcodeproj` in Xcode and press `Cmd + R`.
 ---
 
 ## 4. Troubleshooting
-coming soon
+
+Below are common issues encountered during local setup and their corresponding solutions.
+
+### Backend Issues
+
+* **Error: `ModuleNotFoundError: No module named 'fastapi'` (or other packages) when starting `app.py`**
+  * **Cause:** Your Python virtual environment is either not activated or the dependencies were not installed.
+  * **Fix:** Ensure you run `source venv/bin/activate` (or `venv\Scripts\activate` on Windows) *before* running the server. Then, verify installation with `pip install -r requirements.txt`.
+
+* **Error: `[Errno 98] Address already in use` when starting Uvicorn**
+  * **Cause:** Another process is already using port `8000`.
+  * **Fix:** Kill the existing process (e.g., using `lsof -i :8000` and `kill -9 <PID>` on macOS/Linux), or start the server on a different port: `uvicorn app:app --host 0.0.0.0 --port 8001`. (Note: If you change the port, you must also update the URLs in the iOS app).
+
+* **Error: `500 Internal Server Error` on API calls**
+  * **Cause:** Often caused by missing or invalid credentials in your `.env` file.
+  * **Fix:** Double-check that your `.env` file exists in the `backend` directory (not the root directory) and that your `GEMINI_API_KEY` and Google OAuth credentials are correct and properly formatted.
+
+### iOS / Frontend Issues
+
+* **Error: Xcode build fails with "Unsupported Swift Version" or SDK errors.**
+  * **Cause:** You are using an older version of Xcode.
+  * **Fix:** Ensure you are using Xcode 15 or newer, which includes the iOS 17 SDK required for the native SwiftUI features used in this project.
