@@ -1,5 +1,7 @@
 # Code Contributions – Arya Sadeghi (@AryaSadeghi21)
 
+
+
 ## AI & Syllabus Parsing Engine
 
 -   Built the AI syllabus parsing functionality  to extract calendar events from PDF syllabi ([f434bfe](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/f434bfe))
@@ -7,10 +9,11 @@
 -   Enhanced Gemini prompt engineering to support multiple class processing in a single request ([e39a407](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/e39a407))
 -   Added syllabus validation to prevent non-syllabus uploads and improve parsing accuracy ([4ec2616](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/4ec2616))
 -   Fixed prompt validation to ensure non-syllabus documents return appropriate error messages ([43220a5](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/43220a5), [2e50158](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/2e50158))
--   Refined system prompts for better API call accuracy and reliability ([95f1d10](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/95f1d10))
+-   Refined system prompts for better API call accuracy and reliability ([95f1d10](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/95f1d10)) (also multiple other commits)
 
 ## User Interface & Experience
 
+-   Created the "Weekly Dashboard View" page UI and backend support, including your week at a glance, how busy your weekend will be, and the ability to check off events that have been completed ([f0ad395](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/f0ad395e124675a3faf93595eae263e325611361))
 -   Updated and modernized the Sign In page UI to improve user experience ([75468ff](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/75468ff))
 -   Fixed and enhanced the landing page UI with better visual design and layout ([5b60d8f](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/5b60d8f))
 -   Contributed to recent UI revisions and added new feature requests based on user feedback ([5738b88](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/5738b88))
@@ -24,6 +27,8 @@
 
 ## Project Management & Planning
 
+-   Created initial user stories and the original the idea behind "Plannr" (no specific commit)
+-   Distributed work across team members, created new tickets and features to add, and ensured the project flow stayed smooth. (no specific commit)
 -   Created retrospective meeting notes and documentation structure (RETRO\_02.md) ([6285bda](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/6285bda))
 -   Updated retrospective documentation with team insights and progress tracking ([d7b6f8c](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/d7b6f8c))
 -   Added MVP demo link and presentation materials ([246edda](https://github.com/ucsb-cs148-w26/pj07-syllabus-to-cal-2pm/commit/246edda))
@@ -177,6 +182,29 @@ Designed on Canvas the app logo.
 - Added `.gitignore` and MIT `LICENSE.md` at project initialization ([34c4165](../../.gitignore))
 - Added `.env.SAMPLE` to document required environment variables ([f30fe02](../../backend/.env.SAMPLE))
 - Added the initial SwiftUI `HelloWorld` app scaffolding ([8196b2d](../../Plannr/))
+
+## UI Overhaul & Navigation Flow (Mar 6–9)
+- Redesigned UI flow so users add a class first, return to My Classes, then select a class to upload a syllabus for, feeding into `PDFUploadView` ([517a05a](../../Plannr/Plannr/PDFUploadView.swift))
+- Added redirect back to My Classes page after syncing events to Google Calendar ([6d4154f](../../Plannr/Plannr/CalendarPreviewView.swift))
+- Built `UnifiedCalendarView.swift` (442 lines) — a combined calendar view showing events across all classes with a sidebar menu ([bb90c4a](../../Plannr/Plannr/UnifiedCalendarView.swift))
+- Added Upcoming Events section and made calendar events tappable/clickable ([bb90c4a](../../Plannr/Plannr/PDFUploadView.swift))
+- Added profile button with full functionality in `PDFUploadView` ([5285c2c](../../Plannr/Plannr/PDFUploadView.swift))
+- Added placeholder app icon assets ([bb90c4a](../../Plannr/Plannr/))
+
+## Guest Mode (Mar 6–7)
+- Implemented guest sign-in flow in `SignInView.swift` and `AuthManager.swift` — users can try the app without a Google account ([0a9008a](../../Plannr/Plannr/SignInView.swift))
+- Fixed guest users being unable to upload PDFs ([cd2e00c](../../Plannr/Plannr/ClassEditView.swift))
+- Added guest mode class interactions: guests can create classes and upload syllabi, but syncing to GCal is disabled ([1416643](../../Plannr/Plannr/CalendarPreviewView.swift))
+
+## Class Management & Editing (Mar 7)
+- Built `ClassEditView.swift` (566 lines) — a dedicated class editing page allowing users to rename classes, set end dates, and manage class-specific settings ([e7add8f](../../Plannr/Plannr/ClassEditView.swift))
+- Added editable class name and class end date fields, with corresponding backend support in `app.py` ([13d94a6](../../Plannr/Plannr/ClassEditView.swift))
+- Added inactive date support and tested deleting a class event removing its secondary Google Calendar ([f58b16c](../../Plannr/Plannr/ClassEditView.swift))
+- Bug fixes across `CalendarPreviewView`, `ClassEditView`, and `SyllabusUploadView` following the class editing PR merge ([9091ff5](../../Plannr/Plannr/ClassEditView.swift))
+
+## Re-upload Syllabus Fix (Mar 9)
+- Fixed "Upload New Syllabus" functionality so re-uploading a PDF correctly replaces existing calendar events rather than duplicating them ([3f514b2](../../Plannr/Plannr/SyllabusUploadView.swift))
+
 
 # Code Contributions – Yuhang Jiang
 
