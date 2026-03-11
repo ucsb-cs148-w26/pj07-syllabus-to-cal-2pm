@@ -2,6 +2,18 @@
 
 ThiS **LIVE** document outlines the deployment architecture, system dependencies, and environment setup instructions for the Plannr iOS application and its accompanying backend API.
 
+## Table of Contents
+* [1. System Architecture & Deployment](#1-system-architecture--deployment)
+  * [iOS Application (Frontend)](#ios-application-frontend)
+  * [Python Backend (API)](#python-backend-api)
+  * [CI/CD Required Secrets](#cicd-required-secrets)
+* [2. Prerequisites & Integrations](#2-prerequisites--integrations)
+* [3. Local Installation & Setup](#3-local-installation--setup)
+  * [Option A: Client-Only Setup (Recommended)](#option-a-client-only-setup-recommended)
+  * [Option B: Full-Stack Local Development](#option-b-full-stack-local-development)
+* [4. Troubleshooting](#4-troubleshooting)
+---
+
 ## 1. System Architecture & Deployment
 
 ### iOS Application (Frontend)
