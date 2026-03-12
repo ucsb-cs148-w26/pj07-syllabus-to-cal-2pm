@@ -261,6 +261,7 @@ Open `Plannr/Plannr.xcodeproj` and press `Cmd+R`.
 
 - The backend URL is hardcoded to `https://cs148.misc.iamjiamingliu.com/cs148api/` in `PDFUploadView.swift` and `AuthManager.swift`. To run the backend locally, these values must be updated to `http://localhost:8000`.
 - OAuth redirect requires the iOS simulator or a device that can handle the `plannr://` custom URL scheme.
+- Various incorrect UI navigation redirects (see **Known Problems** in [MANUAL.md](docs/MANUAL.md))
 
 # Contributing
 
